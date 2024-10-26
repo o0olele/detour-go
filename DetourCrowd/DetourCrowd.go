@@ -1,4 +1,4 @@
-package detourcrowd
+package dtcrowd
 
 import detour "github.com/o0olele/detour-go/Detour"
 

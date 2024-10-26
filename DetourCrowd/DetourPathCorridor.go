@@ -18,7 +18,7 @@
 
 // / Represents a dynamic polygon corridor used to plan agent movement.
 // / @ingroup crowd, detour
-package detourcrowd
+package dtcrowd
 
 import detour "github.com/o0olele/detour-go/Detour"
 
