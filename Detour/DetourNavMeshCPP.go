@@ -118,7 +118,8 @@ func freeLink(tile *DtMeshTile, link uint32) {
 	tile.LinksFreeList = link
 }
 
-/**
+/*
+*
 @class dtNavMesh
 
 The navigation mesh consists of one or more tiles defining three primary types of structural data:
@@ -134,16 +135,18 @@ The general build process is as follows:
 -# Combine the source data into a dtNavMeshCreateParams structure.
 -# Create a tile data array using dtCreateNavMeshData().
 -# Allocate at dtNavMesh object and initialize it. (For single tile navigation meshes,
-   the tile data is loaded during this step.)
+
+	the tile data is loaded during this step.)
+
 -# For multi-tile navigation meshes, load the tile data using dtNavMesh::addTile().
 
 Notes:
 
-- This class is usually used in conjunction with the dtNavMeshQuery class for pathfinding.
-- Technically, all navigation meshes are tiled. A 'solo' mesh is simply a navigation mesh initialized
-  to have only a single tile.
-- This class does not implement any asynchronous methods. So the ::dtStatus result of all methods will
-  always contain either a success or failure flag.
+  - This class is usually used in conjunction with the dtNavMeshQuery class for pathfinding.
+  - Technically, all navigation meshes are tiled. A 'solo' mesh is simply a navigation mesh initialized
+    to have only a single tile.
+  - This class does not implement any asynchronous methods. So the ::dtStatus result of all methods will
+    always contain either a success or failure flag.
 
 @see dtNavMeshQuery, dtCreateNavMeshData, dtNavMeshCreateParams, #dtAllocNavMesh, #dtFreeNavMesh
 */
@@ -165,9 +168,9 @@ func (this *DtNavMesh) destructor() {
 /// @{
 /// @name Initialization and Tile Management
 
-/// Initializes the navigation mesh for tiled use.
-///  @param[in]	params		Initialization parameters.
-/// @return The status flags for the operation.
+// / Initializes the navigation mesh for tiled use.
+// /  @param[in]	params		Initialization parameters.
+// / @return The status flags for the operation.
 func (this *DtNavMesh) Init(params *DtNavMeshParams) DtStatus {
 	this.m_params = *params
 	DtVcopy(this.m_orig[:], params.Orig[:])
@@ -210,12 +213,12 @@ func (this *DtNavMesh) Init(params *DtNavMeshParams) DtStatus {
 	return DT_SUCCESS
 }
 
-/// Initializes the navigation mesh for single tile use.
-///  @param[in]	data		Data of the new tile. (See: #dtCreateNavMeshData)
-///  @param[in]	dataSize	The data size of the new tile.
-///  @param[in]	flags		The tile flags. (See: #dtTileFlags)
-/// @return The status flags for the operation.
-///  @see dtCreateNavMeshData
+// / Initializes the navigation mesh for single tile use.
+// /  @param[in]	data		Data of the new tile. (See: #dtCreateNavMeshData)
+// /  @param[in]	dataSize	The data size of the new tile.
+// /  @param[in]	flags		The tile flags. (See: #dtTileFlags)
+// / @return The status flags for the operation.
+// /  @see dtCreateNavMeshData
 func (this *DtNavMesh) Init2(data []byte, dataSize int, flags DtTileFlags) DtStatus {
 	// Make sure the data is in right format.
 	if dataSize < DtAlign4(int(unsafe.Sizeof(DtMeshHeader{}))) {
@@ -242,18 +245,18 @@ func (this *DtNavMesh) Init2(data []byte, dataSize int, flags DtTileFlags) DtSta
 	return this.AddTile(data, dataSize, flags, 0, nil)
 }
 
-/// The navigation mesh initialization params.
-/// @par
-///
-/// @note The parameters are created automatically when the single tile
-/// initialization is performed.
+// / The navigation mesh initialization params.
+// / @par
+// /
+// / @note The parameters are created automatically when the single tile
+// / initialization is performed.
 func (this *DtNavMesh) GetParams() *DtNavMeshParams {
 	return &this.m_params
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
-/// Returns all polygons in neighbour tile based on portal defined by the segment.
+// / Returns all polygons in neighbour tile based on portal defined by the segment.
 func (this *DtNavMesh) findConnectingPolys(va, vb []float32, tile *DtMeshTile, side int, con []DtPolyRef, conarea []float32, maxcon int) int {
 	if tile == nil {
 		return 0
@@ -307,7 +310,7 @@ func (this *DtNavMesh) findConnectingPolys(va, vb []float32, tile *DtMeshTile, s
 	return n
 }
 
-/// Removes external links at specified side.
+// / Removes external links at specified side.
 func (this *DtNavMesh) unconnectLinks(tile, target *DtMeshTile) {
 	if tile == nil || target == nil {
 		return
@@ -339,7 +342,7 @@ func (this *DtNavMesh) unconnectLinks(tile, target *DtMeshTile) {
 	}
 }
 
-/// Builds external polygon links for a tile.
+// / Builds external polygon links for a tile.
 func (this *DtNavMesh) connectExtLinks(tile, target *DtMeshTile, side int) {
 	if tile == nil {
 		return
@@ -403,7 +406,7 @@ func (this *DtNavMesh) connectExtLinks(tile, target *DtMeshTile, side int) {
 	}
 }
 
-/// Builds external polygon links for a tile.
+// / Builds external polygon links for a tile.
 func (this *DtNavMesh) connectExtOffMeshLinks(tile, target *DtMeshTile, side int) {
 	if tile == nil {
 		return
@@ -483,7 +486,7 @@ func (this *DtNavMesh) connectExtOffMeshLinks(tile, target *DtMeshTile, side int
 	}
 }
 
-/// Builds internal polygons links for a tile.
+// / Builds internal polygons links for a tile.
 func (this *DtNavMesh) connectIntLinks(tile *DtMeshTile) {
 	if tile == nil {
 		return
@@ -523,7 +526,7 @@ func (this *DtNavMesh) connectIntLinks(tile *DtMeshTile) {
 	}
 }
 
-/// Builds internal polygons links for a tile.
+// / Builds internal polygons links for a tile.
 func (this *DtNavMesh) baseOffMeshLinks(tile *DtMeshTile) {
 	if tile == nil {
 		return
@@ -585,7 +588,7 @@ func (this *DtNavMesh) baseOffMeshLinks(tile *DtMeshTile) {
 	}
 }
 
-/// Returns closest point on polygon.
+// / Returns closest point on polygon.
 func (this *DtNavMesh) closestPointOnPoly(ref DtPolyRef, pos, closest []float32, posOverPoly *bool) {
 	var tile *DtMeshTile = nil
 	var poly *DtPoly = nil
@@ -661,7 +664,7 @@ func (this *DtNavMesh) closestPointOnPoly(ref DtPolyRef, pos, closest []float32,
 	}
 }
 
-/// Find nearest polygon within a tile.
+// / Find nearest polygon within a tile.
 func (this *DtNavMesh) findNearestPolyInTile(tile *DtMeshTile, center, halfExtents, nearestPt []float32) DtPolyRef {
 	var bmin, bmax [3]float32
 	DtVsub(bmin[:], center, halfExtents)
@@ -706,7 +709,7 @@ func (this *DtNavMesh) findNearestPolyInTile(tile *DtMeshTile, center, halfExten
 	return nearest
 }
 
-/// Queries polygons within a tile.
+// / Queries polygons within a tile.
 func (this *DtNavMesh) queryPolygonsInTile(tile *DtMeshTile, qmin, qmax []float32, polys []DtPolyRef, maxPolys int) int {
 	if tile.BvTree != nil {
 		nodeIndex := 0
@@ -786,29 +789,29 @@ func (this *DtNavMesh) queryPolygonsInTile(tile *DtMeshTile, qmin, qmax []float3
 	}
 }
 
-/// Adds a tile to the navigation mesh.
-///  @param[in]		data		Data for the new tile mesh. (See: #dtCreateNavMeshData)
-///  @param[in]		dataSize	Data size of the new tile mesh.
-///  @param[in]		flags		Tile flags. (See: #dtTileFlags)
-///  @param[in]		lastRef		The desired reference for the tile. (When reloading a tile.) [opt] [Default: 0]
-///  @param[out]	result		The tile reference. (If the tile was succesfully added.) [opt]
-/// @return The status flags for the operation.
-/// @par
-///
-/// The add operation will fail if the data is in the wrong format, the allocated tile
-/// space is full, or there is a tile already at the specified reference.
-///
-/// The lastRef parameter is used to restore a tile with the same tile
-/// reference it had previously used.  In this case the #dtPolyRef's for the
-/// tile will be restored to the same values they were before the tile was
-/// removed.
-///
-/// The nav mesh assumes exclusive access to the data passed and will make
-/// changes to the dynamic portion of the data. For that reason the data
-/// should not be reused in other nav meshes until the tile has been successfully
-/// removed from this nav mesh.
-///
-/// @see dtCreateNavMeshData, #removeTile
+// / Adds a tile to the navigation mesh.
+// /  @param[in]		data		Data for the new tile mesh. (See: #dtCreateNavMeshData)
+// /  @param[in]		dataSize	Data size of the new tile mesh.
+// /  @param[in]		flags		Tile flags. (See: #dtTileFlags)
+// /  @param[in]		lastRef		The desired reference for the tile. (When reloading a tile.) [opt] [Default: 0]
+// /  @param[out]	result		The tile reference. (If the tile was succesfully added.) [opt]
+// / @return The status flags for the operation.
+// / @par
+// /
+// / The add operation will fail if the data is in the wrong format, the allocated tile
+// / space is full, or there is a tile already at the specified reference.
+// /
+// / The lastRef parameter is used to restore a tile with the same tile
+// / reference it had previously used.  In this case the #dtPolyRef's for the
+// / tile will be restored to the same values they were before the tile was
+// / removed.
+// /
+// / The nav mesh assumes exclusive access to the data passed and will make
+// / changes to the dynamic portion of the data. For that reason the data
+// / should not be reused in other nav meshes until the tile has been successfully
+// / removed from this nav mesh.
+// /
+// / @see dtCreateNavMeshData, #removeTile
 func (this *DtNavMesh) AddTile(data []byte, dataSize int, flags DtTileFlags,
 	lastRef DtTileRef, result *DtTileRef) DtStatus {
 
@@ -1003,11 +1006,11 @@ func (this *DtNavMesh) AddTile(data []byte, dataSize int, flags DtTileFlags,
 	return DT_SUCCESS
 }
 
-/// Gets the tile at the specified grid location.
-///  @param[in]	x		The tile's x-location. (x, y, layer)
-///  @param[in]	y		The tile's y-location. (x, y, layer)
-///  @param[in]	layer	The tile's layer. (x, y, layer)
-/// @return The tile, or null if the tile does not exist.
+// / Gets the tile at the specified grid location.
+// /  @param[in]	x		The tile's x-location. (x, y, layer)
+// /  @param[in]	y		The tile's y-location. (x, y, layer)
+// /  @param[in]	layer	The tile's layer. (x, y, layer)
+// / @return The tile, or null if the tile does not exist.
 func (this *DtNavMesh) GetTileAt(x, y, layer int32) *DtMeshTile {
 	// Find tile based on hash.
 	h := computeTileHash(x, y, int32(this.m_tileLutMask))
@@ -1024,7 +1027,7 @@ func (this *DtNavMesh) GetTileAt(x, y, layer int32) *DtMeshTile {
 	return nil
 }
 
-/// Returns neighbour tile based on side.
+// / Returns neighbour tile based on side.
 func (this *DtNavMesh) GetNeighbourTilesAt(x, y int32, side int, tiles []*DtMeshTile, maxTiles int) int {
 	nx := x
 	ny := y
@@ -1053,16 +1056,16 @@ func (this *DtNavMesh) GetNeighbourTilesAt(x, y int32, side int, tiles []*DtMesh
 	return this.GetTilesAt(nx, ny, tiles, maxTiles)
 }
 
-/// Gets all tiles at the specified grid location. (All layers.)
-///  @param[in]		x			The tile's x-location. (x, y)
-///  @param[in]		y			The tile's y-location. (x, y)
-///  @param[out]	tiles		A pointer to an array of tiles that will hold the result.
-///  @param[in]		maxTiles	The maximum tiles the tiles parameter can hold.
-/// @return The number of tiles returned in the tiles array.
-/// @par
-///
-/// This function will not fail if the tiles array is too small to hold the
-/// entire result set.  It will simply fill the array to capacity.
+// / Gets all tiles at the specified grid location. (All layers.)
+// /  @param[in]		x			The tile's x-location. (x, y)
+// /  @param[in]		y			The tile's y-location. (x, y)
+// /  @param[out]	tiles		A pointer to an array of tiles that will hold the result.
+// /  @param[in]		maxTiles	The maximum tiles the tiles parameter can hold.
+// / @return The number of tiles returned in the tiles array.
+// / @par
+// /
+// / This function will not fail if the tiles array is too small to hold the
+// / entire result set.  It will simply fill the array to capacity.
 func (this *DtNavMesh) GetTilesAt(x, y int32, tiles []*DtMeshTile, maxTiles int) int {
 	n := 0
 
@@ -1084,11 +1087,11 @@ func (this *DtNavMesh) GetTilesAt(x, y int32, tiles []*DtMeshTile, maxTiles int)
 	return n
 }
 
-/// Gets the tile reference for the tile at specified grid location.
-///  @param[in]	x		The tile's x-location. (x, y, layer)
-///  @param[in]	y		The tile's y-location. (x, y, layer)
-///  @param[in]	layer	The tile's layer. (x, y, layer)
-/// @return The tile reference of the tile, or 0 if there is none.
+// / Gets the tile reference for the tile at specified grid location.
+// /  @param[in]	x		The tile's x-location. (x, y, layer)
+// /  @param[in]	y		The tile's y-location. (x, y, layer)
+// /  @param[in]	layer	The tile's layer. (x, y, layer)
+// / @return The tile reference of the tile, or 0 if there is none.
 func (this *DtNavMesh) GetTileRefAt(x, y, layer int32) DtTileRef {
 	// Find tile based on hash.
 	h := computeTileHash(x, y, this.m_tileLutMask)
@@ -1105,10 +1108,10 @@ func (this *DtNavMesh) GetTileRefAt(x, y, layer int32) DtTileRef {
 	return 0
 }
 
-/// Gets the tile for the specified tile reference.
-///  @param[in]	ref		The tile reference of the tile to retrieve.
-/// @return The tile for the specified reference, or null if the
-///		reference is invalid.
+// / Gets the tile for the specified tile reference.
+// /  @param[in]	ref		The tile reference of the tile to retrieve.
+// / @return The tile for the specified reference, or null if the
+// /		reference is invalid.
 func (this *DtNavMesh) GetTileByRef(ref DtTileRef) *DtMeshTile {
 	if ref == 0 {
 		return nil
@@ -1125,31 +1128,31 @@ func (this *DtNavMesh) GetTileByRef(ref DtTileRef) *DtMeshTile {
 	return tile
 }
 
-/// The maximum number of tiles supported by the navigation mesh.
-/// @return The maximum number of tiles supported by the navigation mesh.
+// / The maximum number of tiles supported by the navigation mesh.
+// / @return The maximum number of tiles supported by the navigation mesh.
 func (this *DtNavMesh) GetMaxTiles() int32 {
 	return this.m_maxTiles
 }
 
-/// Returns pointer to tile in the tile array.
+// / Returns pointer to tile in the tile array.
 func (this *DtNavMesh) GetTile(i int) *DtMeshTile {
 	return &this.m_tiles[i]
 }
 
-/// Calculates the tile grid location for the specified world position.
-///  @param[in]	pos  The world position for the query. [(x, y, z)]
-///  @param[out]	tx		The tile's x-location. (x, y)
-///  @param[out]	ty		The tile's y-location. (x, y)
+// / Calculates the tile grid location for the specified world position.
+// /  @param[in]	pos  The world position for the query. [(x, y, z)]
+// /  @param[out]	tx		The tile's x-location. (x, y)
+// /  @param[out]	ty		The tile's y-location. (x, y)
 func (this *DtNavMesh) CalcTileLoc(pos []float32, tx, ty *int32) {
 	*tx = (int32)(math.Floor(float64(pos[0]-this.m_orig[0]) / float64(this.m_tileWidth)))
 	*ty = (int32)(math.Floor(float64(pos[2]-this.m_orig[2]) / float64(this.m_tileHeight)))
 }
 
-/// Gets the tile and polygon for the specified polygon reference.
-///  @param[in]		ref		The reference for the a polygon.
-///  @param[out]	tile	The tile containing the polygon.
-///  @param[out]	poly	The polygon.
-/// @return The status flags for the operation.
+// / Gets the tile and polygon for the specified polygon reference.
+// /  @param[in]		ref		The reference for the a polygon.
+// /  @param[out]	tile	The tile containing the polygon.
+// /  @param[out]	poly	The polygon.
+// / @return The status flags for the operation.
 func (this *DtNavMesh) GetTileAndPolyByRef(ref DtPolyRef, tile **DtMeshTile, poly **DtPoly) DtStatus {
 	if ref == 0 {
 		return DT_FAILURE
@@ -1170,15 +1173,15 @@ func (this *DtNavMesh) GetTileAndPolyByRef(ref DtPolyRef, tile **DtMeshTile, pol
 	return DT_SUCCESS
 }
 
-/// Returns the tile and polygon for the specified polygon reference.
-///  @param[in]		ref		A known valid reference for a polygon.
-///  @param[out]	tile	The tile containing the polygon.
-///  @param[out]	poly	The polygon.
-/// @par
-///
-/// @warning Only use this function if it is known that the provided polygon
-/// reference is valid. This function is faster than #getTileAndPolyByRef, but
-/// it does not validate the reference.
+// / Returns the tile and polygon for the specified polygon reference.
+// /  @param[in]		ref		A known valid reference for a polygon.
+// /  @param[out]	tile	The tile containing the polygon.
+// /  @param[out]	poly	The polygon.
+// / @par
+// /
+// / @warning Only use this function if it is known that the provided polygon
+// / reference is valid. This function is faster than #getTileAndPolyByRef, but
+// / it does not validate the reference.
 func (this *DtNavMesh) GetTileAndPolyByRefUnsafe(ref DtPolyRef, tile **DtMeshTile, poly **DtPoly) {
 	var salt, it, ip uint32
 	this.DecodePolyId(ref, &salt, &it, &ip)
@@ -1186,9 +1189,9 @@ func (this *DtNavMesh) GetTileAndPolyByRefUnsafe(ref DtPolyRef, tile **DtMeshTil
 	*poly = &(this.m_tiles[it].Polys[ip])
 }
 
-/// Checks the validity of a polygon reference.
-///  @param[in]	ref		The polygon reference to check.
-/// @return True if polygon reference is valid for the navigation mesh.
+// / Checks the validity of a polygon reference.
+// /  @param[in]	ref		The polygon reference to check.
+// / @return True if polygon reference is valid for the navigation mesh.
 func (this *DtNavMesh) IsValidPolyRef(ref DtPolyRef) bool {
 	if ref == 0 {
 		return false
@@ -1207,15 +1210,15 @@ func (this *DtNavMesh) IsValidPolyRef(ref DtPolyRef) bool {
 	return true
 }
 
-/// Removes the specified tile from the navigation mesh.
-///  @param[in]		ref			The reference of the tile to remove.
-///  @param[out]	data		Data associated with deleted tile.
-///  @param[out]	dataSize	Size of the data associated with deleted tile.
-/// @return The status flags for the operation.
-/// @par
-///
-/// This function returns the data for the tile so that, if desired,
-/// it can be added back to the navigation mesh at a later point.
+// / Removes the specified tile from the navigation mesh.
+// /  @param[in]		ref			The reference of the tile to remove.
+// /  @param[out]	data		Data associated with deleted tile.
+// /  @param[out]	dataSize	Size of the data associated with deleted tile.
+// / @return The status flags for the operation.
+// / @par
+// /
+// / This function returns the data for the tile so that, if desired,
+// / it can be added back to the navigation mesh at a later point.
 func (this *DtNavMesh) RemoveTile(ref DtTileRef, data *[]byte, dataSize *int) DtStatus {
 	if ref == 0 {
 		return DT_FAILURE | DT_INVALID_PARAM
@@ -1312,9 +1315,9 @@ func (this *DtNavMesh) RemoveTile(ref DtTileRef, data *[]byte, dataSize *int) Dt
 	return DT_SUCCESS
 }
 
-/// Gets the tile reference for the specified tile.
-///  @param[in]	tile	The tile.
-/// @return The tile reference of the tile.
+// / Gets the tile reference for the specified tile.
+// /  @param[in]	tile	The tile.
+// / @return The tile reference of the tile.
 func (this *DtNavMesh) GetTileRef(tile *DtMeshTile) DtTileRef {
 	if tile == nil {
 		return 0
@@ -1325,23 +1328,23 @@ func (this *DtNavMesh) GetTileRef(tile *DtMeshTile) DtTileRef {
 	return (DtTileRef)(this.EncodePolyId(tile.Salt, it, 0))
 }
 
-/// Gets the polygon reference for the tile's base polygon.
-///  @param[in]	tile		The tile.
-/// @return The polygon reference for the base polygon in the specified tile.
-/// @par
-///
-/// Example use case:
-/// @code
-///
-/// const dtPolyRef base = navmesh->getPolyRefBase(tile);
-/// for (int i = 0; i < tile->header->polyCount; ++i)
-/// {
-///     const dtPoly* p = &tile->polys[i];
-///     const dtPolyRef ref = base | (dtPolyRef)i;
-///
-///     // Use the reference to access the polygon data.
-/// }
-/// @endcode
+// / Gets the polygon reference for the tile's base polygon.
+// /  @param[in]	tile		The tile.
+// / @return The polygon reference for the base polygon in the specified tile.
+// / @par
+// /
+// / Example use case:
+// / @code
+// /
+// / const dtPolyRef base = navmesh->getPolyRefBase(tile);
+// / for (int i = 0; i < tile->header->polyCount; ++i)
+// / {
+// /     const dtPoly* p = &tile->polys[i];
+// /     const dtPolyRef ref = base | (dtPolyRef)i;
+// /
+// /     // Use the reference to access the polygon data.
+// / }
+// / @endcode
 func (this *DtNavMesh) GetPolyRefBase(tile *DtMeshTile) DtPolyRef {
 	if tile == nil {
 		return 0
@@ -1363,9 +1366,9 @@ type dtPolyState struct {
 	area  uint8  // Area ID of the polygon.
 }
 
-/// Gets the size of the buffer required by #storeTileState to store the specified tile's state.
-///  @param[in]	tile	The tile.
-/// @return The size of the buffer required to store the state.
+// / Gets the size of the buffer required by #storeTileState to store the specified tile's state.
+// /  @param[in]	tile	The tile.
+// / @return The size of the buffer required to store the state.
 func (this *DtNavMesh) GetTileStateSize(tile *DtMeshTile) int {
 	if tile == nil {
 		return 0
@@ -1375,16 +1378,16 @@ func (this *DtNavMesh) GetTileStateSize(tile *DtMeshTile) int {
 	return headerSize + polyStateSize
 }
 
-/// Stores the non-structural state of the tile in the specified buffer. (Flags, area ids, etc.)
-///  @param[in]		tile			The tile.
-///  @param[out]	data			The buffer to store the tile's state in.
-///  @param[in]		maxDataSize		The size of the data buffer. [Limit: >= #getTileStateSize]
-/// @return The status flags for the operation.
-/// @par
-///
-/// Tile state includes non-structural data such as polygon flags, area ids, etc.
-/// @note The state data is only valid until the tile reference changes.
-/// @see #getTileStateSize, #restoreTileState
+// / Stores the non-structural state of the tile in the specified buffer. (Flags, area ids, etc.)
+// /  @param[in]		tile			The tile.
+// /  @param[out]	data			The buffer to store the tile's state in.
+// /  @param[in]		maxDataSize		The size of the data buffer. [Limit: >= #getTileStateSize]
+// / @return The status flags for the operation.
+// / @par
+// /
+// / Tile state includes non-structural data such as polygon flags, area ids, etc.
+// / @note The state data is only valid until the tile reference changes.
+// / @see #getTileStateSize, #restoreTileState
 func (this *DtNavMesh) StoreTileState(tile *DtMeshTile, data []byte, maxDataSize int) DtStatus {
 	// Make sure there is enough space to store the state.
 	sizeReq := this.GetTileStateSize(tile)
@@ -1415,16 +1418,16 @@ func (this *DtNavMesh) StoreTileState(tile *DtMeshTile, data []byte, maxDataSize
 	return DT_SUCCESS
 }
 
-/// Restores the state of the tile.
-///  @param[in]	tile			The tile.
-///  @param[in]	data			The new state. (Obtained from #storeTileState.)
-///  @param[in]	maxDataSize		The size of the state within the data buffer.
-/// @return The status flags for the operation.
-/// @par
-///
-/// Tile state includes non-structural data such as polygon flags, area ids, etc.
-/// @note This function does not impact the tile's #dtTileRef and #dtPolyRef's.
-/// @see #storeTileState
+// / Restores the state of the tile.
+// /  @param[in]	tile			The tile.
+// /  @param[in]	data			The new state. (Obtained from #storeTileState.)
+// /  @param[in]	maxDataSize		The size of the state within the data buffer.
+// / @return The status flags for the operation.
+// / @par
+// /
+// / Tile state includes non-structural data such as polygon flags, area ids, etc.
+// / @note This function does not impact the tile's #dtTileRef and #dtPolyRef's.
+// / @see #storeTileState
 func (this *DtNavMesh) RestoreTileState(tile *DtMeshTile, data []byte, maxDataSize int) DtStatus {
 	// Make sure there is enough space to store the state.
 	sizeReq := this.GetTileStateSize(tile)
@@ -1461,19 +1464,19 @@ func (this *DtNavMesh) RestoreTileState(tile *DtMeshTile, data []byte, maxDataSi
 	return DT_SUCCESS
 }
 
-/// Gets the endpoints for an off-mesh connection, ordered by "direction of travel".
-///  @param[in]		prevRef		The reference of the polygon before the connection.
-///  @param[in]		polyRef		The reference of the off-mesh connection polygon.
-///  @param[out]	startPos	The start position of the off-mesh connection. [(x, y, z)]
-///  @param[out]	endPos		The end position of the off-mesh connection. [(x, y, z)]
-/// @return The status flags for the operation.
-/// @par
-///
-/// Off-mesh connections are stored in the navigation mesh as special 2-vertex
-/// polygons with a single edge. At least one of the vertices is expected to be
-/// inside a normal polygon. So an off-mesh connection is "entered" from a
-/// normal polygon at one of its endpoints. This is the polygon identified by
-/// the prevRef parameter.
+// / Gets the endpoints for an off-mesh connection, ordered by "direction of travel".
+// /  @param[in]		prevRef		The reference of the polygon before the connection.
+// /  @param[in]		polyRef		The reference of the off-mesh connection polygon.
+// /  @param[out]	startPos	The start position of the off-mesh connection. [(x, y, z)]
+// /  @param[out]	endPos		The end position of the off-mesh connection. [(x, y, z)]
+// / @return The status flags for the operation.
+// / @par
+// /
+// / Off-mesh connections are stored in the navigation mesh as special 2-vertex
+// / polygons with a single edge. At least one of the vertices is expected to be
+// / inside a normal polygon. So an off-mesh connection is "entered" from a
+// / normal polygon at one of its endpoints. This is the polygon identified by
+// / the prevRef parameter.
 func (this *DtNavMesh) GetOffMeshConnectionPolyEndPoints(prevRef, polyRef DtPolyRef, startPos, endPos []float32) DtStatus {
 	var salt, it, ip uint32
 
@@ -1519,9 +1522,9 @@ func (this *DtNavMesh) GetOffMeshConnectionPolyEndPoints(prevRef, polyRef DtPoly
 	return DT_SUCCESS
 }
 
-/// Gets the specified off-mesh connection.
-///  @param[in]	ref		The polygon reference of the off-mesh connection.
-/// @return The specified off-mesh connection, or null if the polygon reference is not valid.
+// / Gets the specified off-mesh connection.
+// /  @param[in]	ref		The polygon reference of the off-mesh connection.
+// / @return The specified off-mesh connection, or null if the polygon reference is not valid.
 func (this *DtNavMesh) GetOffMeshConnectionByRef(ref DtPolyRef) *DtOffMeshConnection {
 	var salt, it, ip uint32
 
@@ -1553,10 +1556,10 @@ func (this *DtNavMesh) GetOffMeshConnectionByRef(ref DtPolyRef) *DtOffMeshConnec
 	return &tile.OffMeshCons[idx]
 }
 
-/// Sets the user defined flags for the specified polygon.
-///  @param[in]	ref		The polygon reference.
-///  @param[in]	flags	The new flags for the polygon.
-/// @return The status flags for the operation.
+// / Sets the user defined flags for the specified polygon.
+// /  @param[in]	ref		The polygon reference.
+// /  @param[in]	flags	The new flags for the polygon.
+// / @return The status flags for the operation.
 func (this *DtNavMesh) SetPolyFlags(ref DtPolyRef, flags uint16) DtStatus {
 	if ref == 0 {
 		return DT_FAILURE
@@ -1581,10 +1584,10 @@ func (this *DtNavMesh) SetPolyFlags(ref DtPolyRef, flags uint16) DtStatus {
 	return DT_SUCCESS
 }
 
-/// Gets the user defined flags for the specified polygon.
-///  @param[in]		ref				The polygon reference.
-///  @param[out]	resultFlags		The polygon flags.
-/// @return The status flags for the operation.
+// / Gets the user defined flags for the specified polygon.
+// /  @param[in]		ref				The polygon reference.
+// /  @param[out]	resultFlags		The polygon flags.
+// / @return The status flags for the operation.
 func (this *DtNavMesh) GetPolyFlags(ref DtPolyRef, resultFlags *uint16) DtStatus {
 	if ref == 0 {
 		return DT_FAILURE
@@ -1608,10 +1611,10 @@ func (this *DtNavMesh) GetPolyFlags(ref DtPolyRef, resultFlags *uint16) DtStatus
 	return DT_SUCCESS
 }
 
-/// Sets the user defined area for the specified polygon.
-///  @param[in]	ref		The polygon reference.
-///  @param[in]	area	The new area id for the polygon. [Limit: < #DT_MAX_AREAS]
-/// @return The status flags for the operation.
+// / Sets the user defined area for the specified polygon.
+// /  @param[in]	ref		The polygon reference.
+// /  @param[in]	area	The new area id for the polygon. [Limit: < #DT_MAX_AREAS]
+// / @return The status flags for the operation.
 func (this *DtNavMesh) SetPolyArea(ref DtPolyRef, area uint8) DtStatus {
 	if ref == 0 {
 		return DT_FAILURE
@@ -1635,10 +1638,10 @@ func (this *DtNavMesh) SetPolyArea(ref DtPolyRef, area uint8) DtStatus {
 	return DT_SUCCESS
 }
 
-/// Gets the user defined area for the specified polygon.
-///  @param[in]		ref			The polygon reference.
-///  @param[out]	resultArea	The area id for the polygon.
-/// @return The status flags for the operation.
+// / Gets the user defined area for the specified polygon.
+// /  @param[in]		ref			The polygon reference.
+// /  @param[out]	resultArea	The area id for the polygon.
+// / @return The status flags for the operation.
 func (this *DtNavMesh) GetPolyArea(ref DtPolyRef, resultArea *uint8) DtStatus {
 	if ref == 0 {
 		return DT_FAILURE
@@ -1660,4 +1663,58 @@ func (this *DtNavMesh) GetPolyArea(ref DtPolyRef, resultArea *uint8) DtStatus {
 	*resultArea = poly.GetArea()
 
 	return DT_SUCCESS
+}
+
+// debug draw helper
+func (this *DtNavMesh) GetDebugMesh() ([]float32, []int) {
+	var positions []float32
+	var indices []int
+	var tri int
+	var maxTiles = this.GetMaxTiles()
+
+	for tileIndex := 0; tileIndex < int(maxTiles); tileIndex += 1 {
+		var tile = this.GetTile(tileIndex)
+		var tileHeader = tile.Header
+
+		if tileHeader == nil {
+			continue
+		}
+
+		var tilePolyCount = tileHeader.PolyCount
+		for tilePolyIndex := 0; tilePolyIndex < int(tilePolyCount); tilePolyIndex += 1 {
+			var poly = &tile.Polys[tilePolyIndex]
+
+			// ignore offmesh connection
+			if poly.GetType() == DT_POLYTYPE_OFFMESH_CONNECTION {
+				continue
+			}
+
+			var polyVertCount = poly.VertCount
+			var polyDetail = &tile.DetailMeshes[tilePolyIndex]
+			var polyDetailTriBase = polyDetail.TriBase
+			var polyDetailTriCount = polyDetail.TriCount
+
+			for polyDetailTriIndex := uint32(0); polyDetailTriIndex < uint32(polyDetailTriCount); polyDetailTriIndex += 1 {
+				var detailTrisBaseIndex = int(polyDetailTriBase+polyDetailTriIndex) * 4
+
+				for trianglePoint := int(0); trianglePoint < 3; trianglePoint += 1 {
+
+					if tile.DetailTris[detailTrisBaseIndex+trianglePoint] < polyVertCount {
+						var tileVertsBaseIndex = poly.Verts[tile.DetailTris[detailTrisBaseIndex+trianglePoint]] * 3
+						positions = append(positions, tile.Verts[tileVertsBaseIndex:tileVertsBaseIndex+3]...)
+					} else {
+						var tileVertsBaseIndex = (polyDetail.VertBase +
+							uint32(tile.DetailTris[detailTrisBaseIndex+trianglePoint]) -
+							uint32(poly.VertCount)) * 3
+						positions = append(positions, tile.DetailVerts[tileVertsBaseIndex:tileVertsBaseIndex+3]...)
+					}
+
+					indices = append(indices, tri)
+					tri += 1
+				}
+			}
+		}
+	}
+
+	return positions, indices
 }

@@ -51,7 +51,7 @@ func (this *DtProximityGrid) init(poolSize int, cellSize float32) bool {
 
 func (this *DtProximityGrid) clear() {
 	for i := range this.m_buckets {
-		this.m_buckets[i] = 0
+		this.m_buckets[i] = 0xffff
 	}
 	this.m_poolHead = 0
 	this.m_bounds[0] = 0xffff

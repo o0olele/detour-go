@@ -276,7 +276,7 @@ func (this *DtCrowd) Init(maxAgents int, maxAgentRadius float32, nav *detour.DtN
 	}
 
 	this.m_obstacleQuery = DtAllocObstacleAvoidanceQuery()
-	if this.m_obstacleQuery.init(6, 8) {
+	if !this.m_obstacleQuery.init(6, 8) {
 		return false
 	}
 
@@ -320,7 +320,11 @@ func (this *DtCrowd) Init(maxAgents int, maxAgentRadius float32, nav *detour.DtN
 
 	// The navquery is mostly used for local searches, no need for large node pool.
 	this.m_navquery = detour.DtAllocNavMeshQuery()
-	return detour.DtStatusFailed(this.m_navquery.Init(nav, MAX_COMMON_NODES))
+	if detour.DtStatusFailed(this.m_navquery.Init(nav, MAX_COMMON_NODES)) {
+		return false
+	}
+
+	return true
 }
 
 func (this *DtCrowd) SetObstacleAvoidanceParams(idx int, params *DtObstacleAvoidanceParams) {
@@ -469,7 +473,7 @@ func (this *DtCrowd) RequestMoveTarget(idx int, ref detour.DtPolyRef, pos []floa
 		return false
 	}
 
-	var ag = this.m_agents[idx]
+	var ag = &this.m_agents[idx]
 
 	// Initialize request.
 	ag.targetRef = ref
@@ -534,7 +538,7 @@ func (this *DtCrowd) GetActiveAgents(agents []*DtCrowdAgent, maxAgents int) int 
 
 func (this *DtCrowd) updateMoveRequest(_ float32) {
 	const PATH_MAX_AGENTS = 8
-	var queue []*DtCrowdAgent
+	var queue = make([]*DtCrowdAgent, PATH_MAX_AGENTS)
 	var nqueue int
 
 	for i := 0; i < this.m_maxAgents; i += 1 {

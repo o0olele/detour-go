@@ -73,6 +73,51 @@ type DtCrowdAgentParams struct {
 	userData []byte
 }
 
+func DtAllocCrowdAgentParams() *DtCrowdAgentParams {
+	params := &DtCrowdAgentParams{}
+	return params
+}
+
+func (p *DtCrowdAgentParams) SetRadius(radius float32) *DtCrowdAgentParams {
+	p.radius = radius
+	return p
+}
+
+func (p *DtCrowdAgentParams) SetHeight(height float32) *DtCrowdAgentParams {
+	p.height = height
+	return p
+}
+
+func (p *DtCrowdAgentParams) SetMaxAcceleration(maxAcceleration float32) *DtCrowdAgentParams {
+	p.maxAcceleration = maxAcceleration
+	return p
+}
+
+func (p *DtCrowdAgentParams) SetMaxSpeed(maxSpeed float32) *DtCrowdAgentParams {
+	p.maxSpeed = maxSpeed
+	return p
+}
+
+func (p *DtCrowdAgentParams) SetCollisionQueryRange(collisionQueryRange float32) *DtCrowdAgentParams {
+	p.collisionQueryRange = collisionQueryRange
+	return p
+}
+
+func (p *DtCrowdAgentParams) SetPathOptimizationRange(pathOptimizationRange float32) *DtCrowdAgentParams {
+	p.pathOptimizationRange = pathOptimizationRange
+	return p
+}
+
+func (p *DtCrowdAgentParams) SetSeparationWeight(separationWeight float32) *DtCrowdAgentParams {
+	p.separationWeight = separationWeight
+	return p
+}
+
+func (p *DtCrowdAgentParams) SetUpdateFlags(updateFlags UpdateFlags) *DtCrowdAgentParams {
+	p.updateFlags = updateFlags
+	return p
+}
+
 type MoveRequestState int
 
 const DT_CROWDAGENT_TARGET_NONE MoveRequestState = 0
@@ -140,6 +185,10 @@ type DtCrowdAgent struct {
 	targetPathqRef   DtPathQueueRef   ///< Path finder ref.
 	targetReplan     bool             ///< Flag indicating that the current path is being replanned.
 	targetReplanTime float32          /// <Time since the agent's target was replanned.
+}
+
+func (agent *DtCrowdAgent) GetCurrentPos() []float32 {
+	return agent.npos[:]
 }
 
 type DtCrowdAgentAnimation struct {
@@ -250,6 +299,9 @@ func (this *DtCrowd) GetNavMeshQuery() *detour.DtNavMeshQuery {
 
 func DtAllocCrowd() *DtCrowd {
 	crowd := &DtCrowd{}
+	for i := 0; i < len(crowd.m_filters); i++ {
+		crowd.m_filters[i].Reset()
+	}
 	return crowd
 }
 

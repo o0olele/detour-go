@@ -18,8 +18,8 @@
 
 package detour
 
-/// Defines polygon filtering and traversal costs for navigation mesh query operations.
-/// @ingroup detour
+// / Defines polygon filtering and traversal costs for navigation mesh query operations.
+// / @ingroup detour
 type DtQueryFilter struct {
 	m_areaCost     [DT_MAX_AREAS]float32 ///< Cost per area type. (Used by default implementation.)
 	m_includeFlags uint16                ///< Flags for polygons that can be visited. (Used by default implementation.)
@@ -29,35 +29,39 @@ type DtQueryFilter struct {
 /// @name Getters and setters for the default implementation data.
 ///@{
 
-/// Returns the traversal cost of the area.
-///  @param[in]		i		The id of the area.
-/// @returns The traversal cost of the area.
+// / Returns the traversal cost of the area.
+// /  @param[in]		i		The id of the area.
+// / @returns The traversal cost of the area.
 func (this *DtQueryFilter) GetAreaCost(i int) float32 { return this.m_areaCost[i] }
 
-/// Sets the traversal cost of the area.
-///  @param[in]		i		The id of the area.
-///  @param[in]		cost	The new cost of traversing the area.
+// / Sets the traversal cost of the area.
+// /  @param[in]		i		The id of the area.
+// /  @param[in]		cost	The new cost of traversing the area.
 func (this *DtQueryFilter) SetAreaCost(i int, cost float32) { this.m_areaCost[i] = cost }
 
-/// Returns the include flags for the filter.
-/// Any polygons that include one or more of these flags will be
-/// included in the operation.
+// / Returns the include flags for the filter.
+// / Any polygons that include one or more of these flags will be
+// / included in the operation.
 func (this *DtQueryFilter) GetIncludeFlags() uint16 { return this.m_includeFlags }
 
-/// Sets the include flags for the filter.
-/// @param[in]		flags	The new flags.
+// / Sets the include flags for the filter.
+// / @param[in]		flags	The new flags.
 func (this *DtQueryFilter) SetIncludeFlags(flags uint16) { this.m_includeFlags = flags }
 
-/// Returns the exclude flags for the filter.
-/// Any polygons that include one ore more of these flags will be
-/// excluded from the operation.
+// / Returns the exclude flags for the filter.
+// / Any polygons that include one ore more of these flags will be
+// / excluded from the operation.
 func (this *DtQueryFilter) GetExcludeFlags() uint16 { return this.m_excludeFlags }
 
-/// Sets the exclude flags for the filter.
-/// @param[in]		flags		The new flags.
+// / Sets the exclude flags for the filter.
+// / @param[in]		flags		The new flags.
 func (this *DtQueryFilter) SetExcludeFlags(flags uint16) { this.m_excludeFlags = flags }
 
 ///@}
+
+func (this *DtQueryFilter) Reset() {
+	this.constructor()
+}
 
 func DtAllocDtQueryFilter() *DtQueryFilter {
 	filter := &DtQueryFilter{}
@@ -72,9 +76,9 @@ func DtFreeDtQueryFilter(filter *DtQueryFilter) {
 	filter.destructor()
 }
 
-/// Provides information about raycast hit
-/// filled by dtNavMeshQuery::raycast
-/// @ingroup detour
+// / Provides information about raycast hit
+// / filled by dtNavMeshQuery::raycast
+// / @ingroup detour
 type DtRaycastHit struct {
 	/// The hit parameter. (FLT_MAX if no wall hit.)
 	T float32
@@ -98,9 +102,9 @@ type DtRaycastHit struct {
 	PathCost float32
 }
 
-/// Provides custom polygon query behavior.
-/// Used by dtNavMeshQuery::queryPolygons.
-/// @ingroup detour
+// / Provides custom polygon query behavior.
+// / Used by dtNavMeshQuery::queryPolygons.
+// / @ingroup detour
 type DtPolyQuery interface {
 	/// Called for each batch of unique polygons touched by the search area in dtNavMeshQuery::queryPolygons.
 	/// This can be called multiple times for a single query.
@@ -128,26 +132,26 @@ type DtNavMeshQuery struct {
 	m_openList     *DtNodeQueue ///< Pointer to open list queue.
 }
 
-/// Gets the node pool.
-/// @returns The node pool.
+// / Gets the node pool.
+// / @returns The node pool.
 func (this *DtNavMeshQuery) GetNodePool() *DtNodePool { return this.m_nodePool }
 
-/// Gets the navigation mesh the query object is using.
-/// @return The navigation mesh the query object is using.
+// / Gets the navigation mesh the query object is using.
+// / @return The navigation mesh the query object is using.
 func (this *DtNavMeshQuery) GetAttachedNavMesh() *DtNavMesh { return this.m_nav }
 
-/// Allocates a query object using the Detour allocator.
-/// @return An allocated query object, or null on failure.
-/// @ingroup detour
+// / Allocates a query object using the Detour allocator.
+// / @return An allocated query object, or null on failure.
+// / @ingroup detour
 func DtAllocNavMeshQuery() *DtNavMeshQuery {
 	query := &DtNavMeshQuery{}
 	query.constructor()
 	return query
 }
 
-/// Frees the specified query object using the Detour allocator.
-///  @param[in]		query		A query object allocated using #dtAllocNavMeshQuery
-/// @ingroup detour
+// / Frees the specified query object using the Detour allocator.
+// /  @param[in]		query		A query object allocated using #dtAllocNavMeshQuery
+// / @ingroup detour
 func DtFreeNavMeshQuery(query *DtNavMeshQuery) {
 	if query == nil {
 		return
