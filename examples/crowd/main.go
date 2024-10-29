@@ -5,11 +5,11 @@ import (
 
 	dtcrowd "github.com/o0olele/detour-go/crowd"
 	detour "github.com/o0olele/detour-go/detour"
-	"github.com/o0olele/detour-go/examples/common"
+	"github.com/o0olele/detour-go/loader"
 )
 
 func main() {
-	var mesh = common.LoadTileMesh("../assets/navmesh.bin")
+	var mesh = loader.LoadTileMesh("../assets/navmesh.bin")
 	if mesh == nil {
 		panic("load mesh failed.")
 	}
