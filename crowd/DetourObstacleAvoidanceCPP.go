@@ -21,7 +21,7 @@ package dtcrowd
 import (
 	"math"
 
-	detour "github.com/o0olele/detour-go/Detour"
+	detour "github.com/o0olele/detour-go/detour"
 )
 
 const DT_PI float32 = 3.14159265

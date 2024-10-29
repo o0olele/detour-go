@@ -20,7 +20,7 @@
 // / @ingroup crowd, detour
 package dtcrowd
 
-import detour "github.com/o0olele/detour-go/Detour"
+import detour "github.com/o0olele/detour-go/detour"
 
 type DtPathCorridor struct {
 	m_pos    [3]float32

@@ -1,6 +1,6 @@
 package dtcrowd
 
-import detour "github.com/o0olele/detour-go/Detour"
+import detour "github.com/o0olele/detour-go/detour"
 
 /// The maximum number of neighbors that a crowd agent can take into account
 /// for steering decisions.

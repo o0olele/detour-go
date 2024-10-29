@@ -21,7 +21,7 @@ package dtcache
 import (
 	"unsafe"
 
-	detour "github.com/o0olele/detour-go/Detour"
+	detour "github.com/o0olele/detour-go/detour"
 )
 
 const (

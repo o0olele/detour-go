@@ -18,7 +18,7 @@
 
 package dtcrowd
 
-import detour "github.com/o0olele/detour-go/Detour"
+import detour "github.com/o0olele/detour-go/detour"
 
 func hashPos2(x int, y int, n int) int {
 	return ((x * 73856093) ^ (y * 19349663)) & (n - 1)

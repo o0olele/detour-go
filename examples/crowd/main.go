@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	detour "github.com/o0olele/detour-go/Detour"
-	dtcrowd "github.com/o0olele/detour-go/DetourCrowd"
+	dtcrowd "github.com/o0olele/detour-go/crowd"
+	detour "github.com/o0olele/detour-go/detour"
 	"github.com/o0olele/detour-go/examples/common"
 )
 

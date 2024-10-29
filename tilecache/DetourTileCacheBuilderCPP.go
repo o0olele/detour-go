@@ -22,7 +22,7 @@ import (
 	"reflect"
 	"unsafe"
 
-	detour "github.com/o0olele/detour-go/Detour"
+	detour "github.com/o0olele/detour-go/detour"
 )
 
 var offsetX = [4]int32{-1, 0, 1, 0}

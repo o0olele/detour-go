@@ -4,7 +4,7 @@ import (
 	"os"
 	"unsafe"
 
-	detour "github.com/o0olele/detour-go/Detour"
+	detour "github.com/o0olele/detour-go/detour"
 )
 
 const NAVMESHSET_MAGIC = 'M'<<24 | 'S'<<16 | 'E'<<8 | 'T' //'MSET';

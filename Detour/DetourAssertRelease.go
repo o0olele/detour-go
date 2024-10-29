@@ -1,3 +1,4 @@
+//go:build !debug
 // +build !debug
 
 //
@@ -23,19 +24,21 @@
 
 package detour
 
-/// An assertion failure function.
-//  @param[in]		expression  asserted expression.
-//  @param[in]		file  Filename of the failed assertion.
-//  @param[in]		line  Line number of the failed assertion.
-///  @see dtAssertFailSetCustom
+// / An assertion failure function.
+//
+//	@param[in]		expression  asserted expression.
+//	@param[in]		file  Filename of the failed assertion.
+//	@param[in]		line  Line number of the failed assertion.
+//
+// /  @see dtAssertFailSetCustom
 type DtAssertFailFunc func(expression bool)
 
-/// Sets the base custom assertion failure function to be used by Detour.
-///  @param[in]		assertFailFunc	The function to be invoked in case of failure of #dtAssert
+// / Sets the base custom assertion failure function to be used by Detour.
+// /  @param[in]		assertFailFunc	The function to be invoked in case of failure of #dtAssert
 func DtAssertFailSetCustom(assertFailFunc DtAssertFailFunc) {
 }
 
-/// Gets the base custom assertion failure function to be used by Detour.
+// / Gets the base custom assertion failure function to be used by Detour.
 func DtAssertFailGetCustom() DtAssertFailFunc {
 	return nil
 }

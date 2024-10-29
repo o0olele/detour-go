@@ -15,38 +15,33 @@
 //  3. This notice may not be removed or altered from any source distribution.
 package dtcrowd
 
-import detour "github.com/o0olele/detour-go/Detour"
+import detour "github.com/o0olele/detour-go/detour"
 
-const DT_PATHQ_INVALID DtPathQueueRef = 0
+const MAX_LOCAL_SEGS int = 8
+const MAX_LOCAL_POLYS int = 16
 
-type DtPathQueueRef uint32
-
-type PathQuery struct {
-	ref DtPathQueueRef
-	/// Path find start and end location.
-	startPos [3]float32
-	endPos   [3]float32
-	startRef detour.DtPolyRef
-	endRef   detour.DtPolyRef
-	/// Result.
-	path  []detour.DtPolyRef
-	npath int
-	/// State.
-	status    detour.DtStatus
-	keepAlive int
-	filter    *detour.DtQueryFilter ///< TODO: This is potentially dangerous!
+type BoundarySegment struct {
+	s [6]float32 ///< Segment start/end
+	d float32    ///< Distance for pruning.
 }
 
-const MAX_QUEUE int = 8
+type DtLocalBoundary struct {
+	m_center [3]float32
+	m_segs   [MAX_LOCAL_SEGS]BoundarySegment
+	m_nsegs  int
 
-type DtPathQueue struct {
-	m_queue       [MAX_QUEUE]PathQuery
-	m_nextHandle  DtPathQueueRef
-	m_maxPathSize int
-	m_queueHead   int
-	m_navquery    *detour.DtNavMeshQuery
+	m_polys  [MAX_LOCAL_POLYS]detour.DtPolyRef
+	m_npolys int
 }
 
-func (this *DtPathQueue) GetNavQuery() *detour.DtNavMeshQuery {
-	return this.m_navquery
+func (this *DtLocalBoundary) GetCenter() []float32 {
+	return this.m_center[:]
+}
+
+func (this *DtLocalBoundary) GetSegmentCount() int {
+	return this.m_nsegs
+}
+
+func (this *DtLocalBoundary) GetSegment(i int) []float32 {
+	return this.m_segs[i].s[:]
 }

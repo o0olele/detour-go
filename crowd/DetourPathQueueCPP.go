@@ -18,7 +18,7 @@
 
 package dtcrowd
 
-import detour "github.com/o0olele/detour-go/Detour"
+import detour "github.com/o0olele/detour-go/detour"
 
 func (this *DtPathQueue) Init(maxPathSize, maxSearchNodeCount int, nav *detour.DtNavMesh) bool {
 

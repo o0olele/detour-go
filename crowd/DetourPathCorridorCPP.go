@@ -18,7 +18,7 @@
 
 package dtcrowd
 
-import detour "github.com/o0olele/detour-go/Detour"
+import detour "github.com/o0olele/detour-go/detour"
 
 func dtMergeCorridorStartMoved(path []detour.DtPolyRef, npath, maxPath int,
 	visited []detour.DtPolyRef, nvisited int) int {
