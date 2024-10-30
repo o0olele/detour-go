@@ -18,16 +18,16 @@
 
 package detour
 
-/// A handle to a polygon within a navigation mesh tile.
-/// @ingroup detour
+// / A handle to a polygon within a navigation mesh tile.
+// / @ingroup detour
 type DtPolyRef uint32
 
-/// A handle to a tile within a navigation mesh.
-/// @ingroup detour
+// / A handle to a tile within a navigation mesh.
+// / @ingroup detour
 type DtTileRef uint32
 
-/// The maximum number of vertices per navigation polygon.
-/// @ingroup detour
+// / The maximum number of vertices per navigation polygon.
+// / @ingroup detour
 const DT_VERTS_PER_POLYGON int32 = 6
 
 /// @{
@@ -36,36 +36,36 @@ const DT_VERTS_PER_POLYGON int32 = 6
 /// and state format is compatible with the current build.
 ///
 
-/// A magic number used to detect compatibility of navigation tile data.
+// / A magic number used to detect compatibility of navigation tile data.
 const DT_NAVMESH_MAGIC int32 = 'D'<<24 | 'N'<<16 | 'A'<<8 | 'V'
 
-/// A version number used to detect compatibility of navigation tile data.
+// / A version number used to detect compatibility of navigation tile data.
 const DT_NAVMESH_VERSION int32 = 7
 
-/// A magic number used to detect the compatibility of navigation tile states.
+// / A magic number used to detect the compatibility of navigation tile states.
 const DT_NAVMESH_STATE_MAGIC int32 = 'D'<<24 | 'N'<<16 | 'M'<<8 | 'S'
 
-/// A version number used to detect compatibility of navigation tile states.
+// / A version number used to detect compatibility of navigation tile states.
 const DT_NAVMESH_STATE_VERSION int32 = 1
 
 /// @}
 
-/// A flag that indicates that an entity links to an external entity.
-/// (E.g. A polygon edge is a portal that links to another polygon.)
+// / A flag that indicates that an entity links to an external entity.
+// / (E.g. A polygon edge is a portal that links to another polygon.)
 const DT_EXT_LINK uint16 = 0x8000
 
-/// A value that indicates the entity does not link to anything.
+// / A value that indicates the entity does not link to anything.
 const DT_NULL_LINK uint32 = 0xffffffff
 
-/// A flag that indicates that an off-mesh connection can be traversed in both directions. (Is bidirectional.)
+// / A flag that indicates that an off-mesh connection can be traversed in both directions. (Is bidirectional.)
 const DT_OFFMESH_CON_BIDIR uint8 = 1
 
-/// The maximum number of user defined area ids.
-/// @ingroup detour
+// / The maximum number of user defined area ids.
+// / @ingroup detour
 const DT_MAX_AREAS int = 64
 
-/// Tile flags used for various functions and fields.
-/// For an example, see dtNavMesh::addTile().
+// / Tile flags used for various functions and fields.
+// / For an example, see dtNavMesh::addTile().
 type DtTileFlags int
 
 const (
@@ -73,7 +73,7 @@ const (
 	DT_TILE_FREE_DATA DtTileFlags = 0x01
 )
 
-/// Vertex flags returned by dtNavMeshQuery::findStraightPath.
+// / Vertex flags returned by dtNavMeshQuery::findStraightPath.
 type DtStraightPathFlags uint8
 
 const (
@@ -82,7 +82,7 @@ const (
 	DT_STRAIGHTPATH_OFFMESH_CONNECTION DtStraightPathFlags = 0x04 ///< The vertex is the start of an off-mesh connection.
 )
 
-/// Options for dtNavMeshQuery::findStraightPath.
+// / Options for dtNavMeshQuery::findStraightPath.
 type DtStraightPathOptions int
 
 const (
@@ -90,25 +90,25 @@ const (
 	DT_STRAIGHTPATH_ALL_CROSSINGS  DtStraightPathOptions = 0x02 ///< Add a vertex at every polygon edge crossing.
 )
 
-/// Options for dtNavMeshQuery::initSlicedFindPath and updateSlicedFindPath
+// / Options for dtNavMeshQuery::initSlicedFindPath and updateSlicedFindPath
 type DtFindPathOptions int
 
 const (
 	DT_FINDPATH_ANY_ANGLE DtFindPathOptions = 0x02 ///< use raycasts during pathfind to "shortcut" (raycast still consider costs)
 )
 
-/// Options for dtNavMeshQuery::raycast
+// / Options for dtNavMeshQuery::raycast
 type DtRaycastOptions int
 
 const (
 	DT_RAYCAST_USE_COSTS DtRaycastOptions = 0x01 ///< Raycast should calculate movement cost along the ray and fill RaycastHit::cost
 )
 
-/// Limit raycasting during any angle pahfinding
-/// The limit is given as a multiple of the character radius
+// / Limit raycasting during any angle pahfinding
+// / The limit is given as a multiple of the character radius
 const DT_RAY_CAST_LIMIT_PROPORTIONS float32 = 50.0
 
-/// Flags representing the type of a navigation mesh polygon.
+// / Flags representing the type of a navigation mesh polygon.
 type DtPolyTypes uint8
 
 const (
@@ -118,8 +118,14 @@ const (
 	DT_POLYTYPE_OFFMESH_CONNECTION DtPolyTypes = 1
 )
 
-/// Defines a polygon within a dtMeshTile object.
-/// @ingroup detour
+type DtDetailTriEdgeFlags int
+
+const (
+	DT_DETAIL_EDGE_BOUNDARY DtDetailTriEdgeFlags = 0x01 ///< Detail triangle edge is part of the poly boundary
+)
+
+// / Defines a polygon within a dtMeshTile object.
+// / @ingroup detour
 type DtPoly struct {
 	/// Index to first link in linked list. (Or #DT_NULL_LINK if there is no link.)
 	FirstLink uint32
@@ -142,21 +148,21 @@ type DtPoly struct {
 	AreaAndtype uint8
 }
 
-/// Sets the user defined area id. [Limit: < #DT_MAX_AREAS]
+// / Sets the user defined area id. [Limit: < #DT_MAX_AREAS]
 func (this *DtPoly) SetArea(a uint8) { this.AreaAndtype = (this.AreaAndtype & 0xc0) | (a & 0x3f) }
 
-/// Sets the polygon type. (See: #dtPolyTypes.)
+// / Sets the polygon type. (See: #dtPolyTypes.)
 func (this *DtPoly) SetType(t DtPolyTypes) {
 	this.AreaAndtype = (this.AreaAndtype & 0x3f) | (uint8(t) << 6)
 }
 
-/// Gets the user defined area id.
+// / Gets the user defined area id.
 func (this *DtPoly) GetArea() uint8 { return this.AreaAndtype & 0x3f }
 
-/// Gets the polygon type. (See: #dtPolyTypes)
+// / Gets the polygon type. (See: #dtPolyTypes)
 func (this *DtPoly) GetType() DtPolyTypes { return DtPolyTypes(this.AreaAndtype >> 6) }
 
-/// Defines the location of detail sub-mesh data within a dtMeshTile.
+// / Defines the location of detail sub-mesh data within a dtMeshTile.
 type DtPolyDetail struct {
 	VertBase  uint32 ///< The offset of the vertices in the dtMeshTile::detailVerts array.
 	TriBase   uint32 ///< The offset of the triangles in the dtMeshTile::detailTris array.
@@ -164,9 +170,9 @@ type DtPolyDetail struct {
 	TriCount  uint8  ///< The number of triangles in the sub-mesh.
 }
 
-/// Defines a link between polygons.
-/// @note This structure is rarely if ever used by the end user.
-/// @see dtMeshTile
+// / Defines a link between polygons.
+// / @note This structure is rarely if ever used by the end user.
+// / @see dtMeshTile
 type DtLink struct {
 	Ref  DtPolyRef ///< Neighbour reference. (The neighbor that is linked to.)
 	Next uint32    ///< Index of the next link.
@@ -176,17 +182,17 @@ type DtLink struct {
 	Bmax uint8     ///< If a boundary link, defines the maximum sub-edge area.
 }
 
-/// Bounding volume node.
-/// @note This structure is rarely if ever used by the end user.
-/// @see dtMeshTile
+// / Bounding volume node.
+// / @note This structure is rarely if ever used by the end user.
+// / @see dtMeshTile
 type DtBVNode struct {
 	Bmin [3]uint16 ///< Minimum bounds of the node's AABB. [(x, y, z)]
 	Bmax [3]uint16 ///< Maximum bounds of the node's AABB. [(x, y, z)]
 	I    int32     ///< The node's index. (Negative for escape sequence.)
 }
 
-/// Defines an navigation mesh off-mesh connection within a dtMeshTile object.
-/// An off-mesh connection is a user defined traversable connection made up to two vertices.
+// / Defines an navigation mesh off-mesh connection within a dtMeshTile object.
+// / An off-mesh connection is a user defined traversable connection made up to two vertices.
 type DtOffMeshConnection struct {
 	/// The endpoints of the connection. [(ax, ay, az, bx, by, bz)]
 	Pos [6]float32
@@ -209,8 +215,8 @@ type DtOffMeshConnection struct {
 	UserId uint32
 }
 
-/// Provides high level information related to a dtMeshTile object.
-/// @ingroup detour
+// / Provides high level information related to a dtMeshTile object.
+// / @ingroup detour
 type DtMeshHeader struct {
 	Magic           int32  ///< Tile magic number. (Used to identify the data format.)
 	Version         int32  ///< Tile data format version number.
@@ -240,8 +246,8 @@ type DtMeshHeader struct {
 	BvQuantFactor float32
 }
 
-/// Defines a navigation mesh tile.
-/// @ingroup detour
+// / Defines a navigation mesh tile.
+// / @ingroup detour
 type DtMeshTile struct {
 	Salt uint32 ///< Counter describing modifications to the tile.
 
@@ -270,10 +276,10 @@ type DtMeshTile struct {
 	Next     *DtMeshTile ///< The next free tile, or the next tile in the spatial grid.
 }
 
-/// Configuration parameters used to define multi-tile navigation meshes.
-/// The values are used to allocate space during the initialization of a navigation mesh.
-/// @see dtNavMesh::init()
-/// @ingroup detour
+// / Configuration parameters used to define multi-tile navigation meshes.
+// / The values are used to allocate space during the initialization of a navigation mesh.
+// / @see dtNavMesh::init()
+// / @ingroup detour
 type DtNavMeshParams struct {
 	Orig       [3]float32 ///< The world space origin of the navigation mesh's tile space. [(x, y, z)]
 	TileWidth  float32    ///< The width of each tile. (Along the x-axis.)
@@ -282,8 +288,8 @@ type DtNavMeshParams struct {
 	MaxPolys   uint32     ///< The maximum number of polygons each tile can contain.
 }
 
-/// A navigation mesh based on tiles of convex polygons.
-/// @ingroup detour
+// / A navigation mesh based on tiles of convex polygons.
+// / @ingroup detour
 type DtNavMesh struct {
 	m_params                  DtNavMeshParams ///< Current initialization params. TODO: do not store this info twice.
 	m_orig                    [3]float32      ///< Origin of the tile (0,0)
@@ -305,22 +311,22 @@ type DtNavMesh struct {
 /// @name Encoding and Decoding
 /// These functions are generally meant for internal use only.
 
-/// Derives a standard polygon reference.
-///  @note This function is generally meant for internal use only.
-///  @param[in]	salt	The tile's salt value.
-///  @param[in]	it		The index of the tile.
-///  @param[in]	ip		The index of the polygon within the tile.
+// / Derives a standard polygon reference.
+// /  @note This function is generally meant for internal use only.
+// /  @param[in]	salt	The tile's salt value.
+// /  @param[in]	it		The index of the tile.
+// /  @param[in]	ip		The index of the polygon within the tile.
 func (this *DtNavMesh) EncodePolyId(salt, it, ip uint32) DtPolyRef {
 	return DtPolyRef((salt << (this.m_polyBits + this.m_tileBits)) | (it << this.m_polyBits) | ip)
 }
 
-/// Decodes a standard polygon reference.
-///  @note This function is generally meant for internal use only.
-///  @param[in]	ref   The polygon reference to decode.
-///  @param[out]	salt	The tile's salt value.
-///  @param[out]	it		The index of the tile.
-///  @param[out]	ip		The index of the polygon within the tile.
-///  @see #encodePolyId
+// / Decodes a standard polygon reference.
+// /  @note This function is generally meant for internal use only.
+// /  @param[in]	ref   The polygon reference to decode.
+// /  @param[out]	salt	The tile's salt value.
+// /  @param[out]	it		The index of the tile.
+// /  @param[out]	ip		The index of the polygon within the tile.
+// /  @see #encodePolyId
 func (this *DtNavMesh) DecodePolyId(ref DtPolyRef, salt, it, ip *uint32) {
 	saltMask := (uint32(1) << this.m_saltBits) - 1
 	tileMask := (uint32(1) << this.m_tileBits) - 1
@@ -330,47 +336,51 @@ func (this *DtNavMesh) DecodePolyId(ref DtPolyRef, salt, it, ip *uint32) {
 	*ip = (uint32(ref) & polyMask)
 }
 
-/// Extracts a tile's salt value from the specified polygon reference.
-///  @note This function is generally meant for internal use only.
-///  @param[in]	ref		The polygon reference.
-///  @see #encodePolyId
+// / Extracts a tile's salt value from the specified polygon reference.
+// /  @note This function is generally meant for internal use only.
+// /  @param[in]	ref		The polygon reference.
+// /  @see #encodePolyId
 func (this *DtNavMesh) DecodePolyIdSalt(ref DtPolyRef) uint32 {
 	saltMask := (uint32(1) << this.m_saltBits) - 1
 	return ((uint32(ref) >> (this.m_polyBits + this.m_tileBits)) & saltMask)
 }
 
-/// Extracts the tile's index from the specified polygon reference.
-///  @note This function is generally meant for internal use only.
-///  @param[in]	ref		The polygon reference.
-///  @see #encodePolyId
+// / Extracts the tile's index from the specified polygon reference.
+// /  @note This function is generally meant for internal use only.
+// /  @param[in]	ref		The polygon reference.
+// /  @see #encodePolyId
 func (this *DtNavMesh) DecodePolyIdTile(ref DtPolyRef) uint32 {
 	tileMask := (uint32(1) << this.m_tileBits) - 1
 	return ((uint32(ref) >> this.m_polyBits) & tileMask)
 }
 
-/// Extracts the polygon's index (within its tile) from the specified polygon reference.
-///  @note This function is generally meant for internal use only.
-///  @param[in]	ref		The polygon reference.
-///  @see #encodePolyId
+// / Extracts the polygon's index (within its tile) from the specified polygon reference.
+// /  @note This function is generally meant for internal use only.
+// /  @param[in]	ref		The polygon reference.
+// /  @see #encodePolyId
 func (this *DtNavMesh) DecodePolyIdPoly(ref DtPolyRef) uint32 {
 	polyMask := (uint32(1) << this.m_polyBits) - 1
 	return (uint32(ref) & polyMask)
 }
 
+func DtGetDetailTriEdgeFlags(triFlags uint8, edgeIndex int) int {
+	return int((triFlags >> (edgeIndex * 2)) & 0x3)
+}
+
 /// @}
 
-/// Allocates a navigation mesh object using the Detour allocator.
-/// @return A navigation mesh that is ready for initialization, or null on failure.
-///  @ingroup detour
+// / Allocates a navigation mesh object using the Detour allocator.
+// / @return A navigation mesh that is ready for initialization, or null on failure.
+// /  @ingroup detour
 func DtAllocNavMesh() *DtNavMesh {
 	navmesh := &DtNavMesh{}
 	navmesh.constructor()
 	return navmesh
 }
 
-/// Frees the specified navigation mesh object using the Detour allocator.
-///  @param[in]	navmesh		A navigation mesh allocated using #dtAllocNavMesh
-///  @ingroup detour
+// / Frees the specified navigation mesh object using the Detour allocator.
+// /  @param[in]	navmesh		A navigation mesh allocated using #dtAllocNavMesh
+// /  @ingroup detour
 func DtFreeNavMesh(navmesh *DtNavMesh) {
 	if navmesh == nil {
 		return

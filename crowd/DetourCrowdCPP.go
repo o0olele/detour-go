@@ -148,8 +148,8 @@ func addNeighbour(idx int, dist float32, neis []DtCrowdNeighbour, nneis int, max
 		nei = &neis[i]
 	}
 
-	nei.dist = 0
-	nei.idx = 0
+	nei.idx = idx
+	nei.dist = dist
 
 	return detour.DtMinInt(nneis+1, maxNeis)
 }
@@ -437,6 +437,42 @@ func (this *DtCrowd) RemoveAgent(idx int) {
 	}
 }
 
+func (this *DtCrowd) TeleportAgent(idx int, des []float32) bool {
+	if idx < 0 || idx >= this.m_maxAgents {
+		return false
+	}
+
+	var ag = &this.m_agents[idx]
+
+	var polyRef detour.DtPolyRef
+	var nearest [3]float32
+	this.m_navquery.FindNearestPoly(des, this.m_agentPlacementHalfExtents[:], &this.m_filters[ag.params.queryFilterType], &polyRef, nearest[:])
+
+	ag.corridor.Reset(polyRef, nearest[:])
+	ag.boundary.Reset()
+	ag.partial = false
+
+	ag.topologyOptTime = 0
+	ag.targetReplanTime = 0
+	ag.nneis = 0
+
+	detour.DtVset(ag.dvel[:], 0, 0, 0)
+	detour.DtVset(ag.nvel[:], 0, 0, 0)
+	detour.DtVset(ag.vel[:], 0, 0, 0)
+	detour.DtVcopy(ag.npos[:], nearest[:])
+
+	ag.desiredSpeed = 0
+
+	if polyRef > 0 {
+		ag.state = DT_CROWDAGENT_STATE_WALKING
+	} else {
+		ag.state = DT_CROWDAGENT_STATE_INVALID
+	}
+
+	ag.targetState = DT_CROWDAGENT_TARGET_NONE
+	return true
+}
+
 func (this *DtCrowd) requestMoveTargetReplan(idx int, ref detour.DtPolyRef, pos []float32) bool {
 	if idx < 0 || idx >= this.m_maxAgents {
 		return false
@@ -487,6 +523,19 @@ func (this *DtCrowd) RequestMoveTarget(idx int, ref detour.DtPolyRef, pos []floa
 	}
 
 	return true
+}
+
+func (this *DtCrowd) AgentGoto(idx int, pos []float32) bool {
+	if idx < 0 || idx >= this.m_maxAgents {
+		return false
+	}
+
+	var ag = &this.m_agents[idx]
+	var polyRef detour.DtPolyRef
+	var nearest [3]float32
+	this.m_navquery.FindNearestPoly(pos, this.m_agentPlacementHalfExtents[:], &this.m_filters[ag.params.queryFilterType], &polyRef, nearest[:])
+
+	return this.RequestMoveTarget(idx, polyRef, nearest[:])
 }
 
 func (this *DtCrowd) RequestMoveVelocity(idx int, vel []float32) bool {
@@ -560,10 +609,12 @@ func (this *DtCrowd) updateMoveRequest(_ float32) {
 
 			const MAX_RES = 32
 			var reqPos [3]float32
-			var reqPath [MAX_RES]detour.DtPolyRef
+			var reqPath [MAX_RES]detour.DtPolyRef // The path to the request location
 			var reqPathCount int
-			var doneIters int
+
+			// Quick search towards the goal.
 			const MAX_ITER = 20
+			var doneIters int
 			this.m_navquery.InitSlicedFindPath(path[0], ag.targetRef, ag.npos[:], ag.targetPos[:], &this.m_filters[ag.params.queryFilterType], 0)
 			this.m_navquery.UpdateSlicedFindPath(MAX_ITER, &doneIters)
 
@@ -591,7 +642,7 @@ func (this *DtCrowd) updateMoveRequest(_ float32) {
 			if reqPathCount <= 0 {
 				detour.DtVcopy(reqPos[:], ag.npos[:])
 				reqPath[0] = path[0]
-				reqPathCount = 0
+				reqPathCount = 1
 			}
 
 			ag.corridor.SetCorridor(reqPos[:], reqPath[:], reqPathCount)
@@ -624,7 +675,7 @@ func (this *DtCrowd) updateMoveRequest(_ float32) {
 
 	var status detour.DtStatus
 	for i := 0; i < this.m_maxAgents; i++ {
-		var ag = this.m_agents[i]
+		var ag = &this.m_agents[i]
 		if !ag.active {
 			continue
 		}
@@ -633,6 +684,7 @@ func (this *DtCrowd) updateMoveRequest(_ float32) {
 		}
 
 		if ag.targetState == DT_CROWDAGENT_TARGET_WAITING_FOR_PATH {
+			// Poll path queue.
 			status = this.m_pathq.GetRequestStatus(ag.targetPathqRef)
 			if detour.DtStatusFailed(status) {
 				ag.targetPathqRef = DT_PATHQ_INVALID
@@ -664,6 +716,14 @@ func (this *DtCrowd) updateMoveRequest(_ float32) {
 					ag.partial = false
 				}
 
+				// Merge result and existing path.
+				// The agent might have moved whilst the request is
+				// being processed, so the path may have changed.
+				// We assume that the end of the path is at the same location
+				// where the request was issued.
+
+				// The last ref in the old path should be the same as
+				// the location where the request was issued..
 				if valid && path[npath-1] != res[0] {
 					valid = false
 				}
@@ -791,7 +851,13 @@ func (this *DtCrowd) checkPathValidity(agents []*DtCrowdAgent, nagents int, dt f
 			replan = true
 		}
 
+		// If the agent does not have move target or is controlled by velocity, no need to recover the target nor replan.
 		if ag.targetState == DT_CROWDAGENT_TARGET_NONE || ag.targetState == DT_CROWDAGENT_TARGET_VELOCITY {
+			continue
+		}
+
+		// Try to recover move request position.
+		if ag.targetState != DT_CROWDAGENT_TARGET_NONE && ag.targetState != DT_CROWDAGENT_TARGET_FAILED {
 			if !this.m_navquery.IsValidPolyRef(ag.targetRef, &this.m_filters[ag.params.queryFilterType]) {
 				var nearest [3]float32
 				detour.DtVcopy(nearest[:], ag.targetPos[:])
@@ -870,10 +936,11 @@ func (this *DtCrowd) Update(dt float32, debug *DtCrowdAgentDebugInfo) {
 			ag, ag.neis[:], DT_CROWDAGENT_MAX_NEIGHBOURS,
 			agents, nagents, this.m_grid)
 		for j := 0; j < ag.nneis; j += 1 {
-			ag.neis[j].idx = this.getAgentIndex(ag)
+			ag.neis[j].idx = this.getAgentIndex(agents[ag.neis[j].idx])
 		}
 	}
 
+	// Find next corner to steer to.
 	for i := 0; i < nagents; i += 1 {
 		var ag = agents[i]
 
@@ -975,7 +1042,7 @@ func (this *DtCrowd) Update(dt float32, debug *DtCrowdAgentDebugInfo) {
 			var disp [3]float32
 
 			for j := 0; j < ag.nneis; j += 1 {
-				var nei = this.m_agents[ag.neis[j].idx]
+				var nei = &this.m_agents[ag.neis[j].idx]
 				var diff [3]float32
 				detour.DtVsub(diff[:], ag.npos[:], nei.npos[:])
 				diff[1] = 0
@@ -1117,42 +1184,52 @@ func (this *DtCrowd) Update(dt float32, debug *DtCrowdAgentDebugInfo) {
 				continue
 			}
 
-			ag.corridor.MovePosition(ag.npos[:], this.m_navquery, &this.m_filters[ag.params.queryFilterType])
-			detour.DtVcopy(ag.npos[:], ag.corridor.GetPos())
-
-			if ag.targetState == DT_CROWDAGENT_TARGET_NONE || ag.targetState == DT_CROWDAGENT_TARGET_VELOCITY {
-				ag.corridor.Reset(ag.corridor.GetFirstPoly(), ag.npos[:])
-				ag.partial = false
-			}
+			detour.DtVadd(ag.npos[:], ag.npos[:], ag.disp[:])
 		}
 
-		for i := 0; i < nagents; i += 1 {
-			var ag = agents[i]
-			var idx = this.getAgentIndex(ag)
-			var anim = &this.m_agentAnims[idx]
-			if !anim.active {
-				continue
-			}
+	}
 
-			anim.t += dt
-			if anim.t > anim.tmax {
-				anim.active = false
-				ag.state = DT_CROWDAGENT_STATE_WALKING
-				continue
-			}
-
-			var ta = anim.tmax * 0.15
-			var tb = anim.tmax
-			if anim.t < ta {
-				var u = tween(anim.t, 0, ta)
-				detour.DtVlerp(ag.npos[:], anim.initPos[:], anim.startPos[:], u)
-			} else {
-				var u = tween(anim.t, ta, tb)
-				detour.DtVlerp(ag.npos[:], anim.startPos[:], anim.endPos[:], u)
-			}
-
-			detour.DtVset(ag.vel[:], 0, 0, 0)
-			detour.DtVset(ag.dvel[:], 0, 0, 0)
+	for i := 0; i < nagents; i += 1 {
+		var ag = agents[i]
+		if ag.state != DT_CROWDAGENT_STATE_WALKING {
+			continue
 		}
+
+		ag.corridor.MovePosition(ag.npos[:], this.m_navquery, &this.m_filters[ag.params.queryFilterType])
+		detour.DtVcopy(ag.npos[:], ag.corridor.GetPos())
+
+		if ag.targetState == DT_CROWDAGENT_TARGET_NONE || ag.targetState == DT_CROWDAGENT_TARGET_VELOCITY {
+			ag.corridor.Reset(ag.corridor.GetFirstPoly(), ag.npos[:])
+			ag.partial = false
+		}
+	}
+
+	for i := 0; i < nagents; i += 1 {
+		var ag = agents[i]
+		var idx = this.getAgentIndex(ag)
+		var anim = &this.m_agentAnims[idx]
+		if !anim.active {
+			continue
+		}
+
+		anim.t += dt
+		if anim.t > anim.tmax {
+			anim.active = false
+			ag.state = DT_CROWDAGENT_STATE_WALKING
+			continue
+		}
+
+		var ta = anim.tmax * 0.15
+		var tb = anim.tmax
+		if anim.t < ta {
+			var u = tween(anim.t, 0, ta)
+			detour.DtVlerp(ag.npos[:], anim.initPos[:], anim.startPos[:], u)
+		} else {
+			var u = tween(anim.t, ta, tb)
+			detour.DtVlerp(ag.npos[:], anim.startPos[:], anim.endPos[:], u)
+		}
+
+		detour.DtVset(ag.vel[:], 0, 0, 0)
+		detour.DtVset(ag.dvel[:], 0, 0, 0)
 	}
 }

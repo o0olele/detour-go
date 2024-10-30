@@ -61,7 +61,7 @@ func (this *DtLocalBoundary) addSegment(dist float32, s []float32) {
 	}
 
 	seg.d = dist
-	copy(seg.s[0:], s[:])
+	copy(seg.s[0:], s[:6])
 
 	if this.m_nsegs < MAX_LOCAL_SEGS {
 		this.m_nsegs += 1

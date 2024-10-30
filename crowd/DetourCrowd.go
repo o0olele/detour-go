@@ -191,6 +191,10 @@ func (agent *DtCrowdAgent) GetCurrentPos() []float32 {
 	return agent.npos[:]
 }
 
+func (agent *DtCrowdAgent) GetState() CrowdAgentState {
+	return agent.state
+}
+
 type DtCrowdAgentAnimation struct {
 	active   bool
 	initPos  [3]float32
