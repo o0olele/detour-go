@@ -282,8 +282,8 @@ func (this *DtNavMesh) findConnectingPolys(va, vb []float32, tile *DtMeshTile, s
 				continue
 			}
 
-			vc := tile.Verts[poly.Verts[j]*3:]
-			vd := tile.Verts[poly.Verts[(j+1)%nv]*3:]
+			vc := tile.Verts[int(poly.Verts[j])*3:]
+			vd := tile.Verts[int(poly.Verts[(j+1)%nv])*3:]
 			bpos := getSlabCoord(vc, side)
 
 			// Segments are not close enough.
@@ -366,8 +366,8 @@ func (this *DtNavMesh) connectExtLinks(tile, target *DtMeshTile, side int) {
 				continue
 			}
 			// Create new links
-			va := tile.Verts[poly.Verts[j]*3:]
-			vb := tile.Verts[poly.Verts[(j+1)%nv]*3:]
+			va := tile.Verts[int(poly.Verts[j])*3:]
+			vb := tile.Verts[int(poly.Verts[(j+1)%nv])*3:]
 			var nei [4]DtPolyRef
 			var neia [4 * 2]float32
 			nnei := this.findConnectingPolys(va, vb, target, DtOppositeTile(dir), nei[:], neia[:], 4)
@@ -445,7 +445,7 @@ func (this *DtNavMesh) connectExtOffMeshLinks(tile, target *DtMeshTile, side int
 			continue
 		}
 		// Make sure the location is on current mesh.
-		v := target.Verts[targetPoly.Verts[1]*3:]
+		v := target.Verts[int(targetPoly.Verts[1])*3:]
 		DtVcopy(v, nearestPt[:])
 
 		// Link off-mesh connection to target poly.
@@ -553,7 +553,7 @@ func (this *DtNavMesh) baseOffMeshLinks(tile *DtMeshTile) {
 			continue
 		}
 		// Make sure the location is on current mesh.
-		v := tile.Verts[poly.Verts[0]*3:]
+		v := tile.Verts[int(poly.Verts[0])*3:]
 		DtVcopy(v, nearestPt[:])
 
 		// Link off-mesh connection to target poly.
@@ -596,8 +596,8 @@ func (this *DtNavMesh) closestPointOnPoly(ref DtPolyRef, pos, closest []float32,
 
 	// Off-mesh connections don't have detail polygons.
 	if poly.GetType() == DT_POLYTYPE_OFFMESH_CONNECTION {
-		v0 := tile.Verts[poly.Verts[0]*3:]
-		v1 := tile.Verts[poly.Verts[1]*3:]
+		v0 := tile.Verts[int(poly.Verts[0])*3:]
+		v1 := tile.Verts[int(poly.Verts[1])*3:]
 		d0 := DtVdist(pos, v0)
 		d1 := DtVdist(pos, v1)
 		u := d0 / (d0 + d1)
@@ -619,7 +619,7 @@ func (this *DtNavMesh) closestPointOnPoly(ref DtPolyRef, pos, closest []float32,
 	var edget [DT_VERTS_PER_POLYGON]float32
 	nv := int(poly.VertCount)
 	for i := 0; i < nv; i++ {
-		DtVcopy(verts[i*3:], tile.Verts[poly.Verts[i]*3:])
+		DtVcopy(verts[i*3:], tile.Verts[int(poly.Verts[i])*3:])
 	}
 	DtVcopy(closest, pos)
 	if !DtDistancePtPolyEdgesSqr(pos, verts[:], nv, edged[:], edget[:]) {
@@ -651,7 +651,7 @@ func (this *DtNavMesh) closestPointOnPoly(ref DtPolyRef, pos, closest []float32,
 		var v [3][]float32
 		for k := 0; k < 3; k++ {
 			if t[k] < poly.VertCount {
-				v[k] = tile.Verts[poly.Verts[t[k]]*3:]
+				v[k] = tile.Verts[int(poly.Verts[t[k]])*3:]
 			} else {
 				v[k] = tile.DetailVerts[(pd.VertBase+uint32(t[k]-poly.VertCount))*3:]
 			}
@@ -770,11 +770,11 @@ func (this *DtNavMesh) queryPolygonsInTile(tile *DtMeshTile, qmin, qmax []float3
 				continue
 			}
 			// Calc polygon bounds.
-			v := tile.Verts[p.Verts[0]*3:]
+			v := tile.Verts[int(p.Verts[0])*3:]
 			DtVcopy(bmin[:], v)
 			DtVcopy(bmax[:], v)
 			for j := 1; j < int(p.VertCount); j++ {
-				v = tile.Verts[p.Verts[j]*3:]
+				v = tile.Verts[int(p.Verts[j])*3:]
 				DtVmin(bmin[:], v)
 				DtVmax(bmax[:], v)
 			}
@@ -1516,8 +1516,8 @@ func (this *DtNavMesh) GetOffMeshConnectionPolyEndPoints(prevRef, polyRef DtPoly
 		}
 	}
 
-	DtVcopy(startPos, tile.Verts[poly.Verts[idx0]*3:])
-	DtVcopy(endPos, tile.Verts[poly.Verts[idx1]*3:])
+	DtVcopy(startPos, tile.Verts[int(poly.Verts[idx0])*3:])
+	DtVcopy(endPos, tile.Verts[int(poly.Verts[idx1])*3:])
 
 	return DT_SUCCESS
 }

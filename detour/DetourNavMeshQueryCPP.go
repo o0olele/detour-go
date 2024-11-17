@@ -222,9 +222,9 @@ func (this *DtNavMeshQuery) FindRandomPoint(filter *DtQueryFilter, frand func() 
 		// Calc area of the polygon.
 		var polyArea float32
 		for j := 2; j < int(p.VertCount); j++ {
-			va := tile.Verts[p.Verts[0]*3:]
-			vb := tile.Verts[p.Verts[j-1]*3:]
-			vc := tile.Verts[p.Verts[j]*3:]
+			va := tile.Verts[int(p.Verts[0])*3:]
+			vb := tile.Verts[int(p.Verts[j-1])*3:]
+			vc := tile.Verts[int(p.Verts[j])*3:]
 			polyArea += DtTriArea2D(va, vb, vc)
 		}
 
@@ -241,12 +241,12 @@ func (this *DtNavMeshQuery) FindRandomPoint(filter *DtQueryFilter, frand func() 
 		return DT_FAILURE
 	}
 	// Randomly pick point on polygon.
-	v := tile.Verts[poly.Verts[0]*3:]
+	v := tile.Verts[int(poly.Verts[0])*3:]
 	var verts [3 * DT_VERTS_PER_POLYGON]float32
 	var areas [DT_VERTS_PER_POLYGON]float32
 	DtVcopy(verts[0*3:], v)
 	for j := 1; j < int(poly.VertCount); j++ {
-		v = tile.Verts[poly.Verts[j]*3:]
+		v = tile.Verts[int(poly.Verts[j])*3:]
 		DtVcopy(verts[j*3:], v)
 	}
 
@@ -334,9 +334,9 @@ func (this *DtNavMeshQuery) FindRandomPointAroundCircle(startRef DtPolyRef, cent
 			// Calc area of the polygon.
 			var polyArea float32
 			for j := 2; j < int(bestPoly.VertCount); j++ {
-				va := bestTile.Verts[bestPoly.Verts[0]*3:]
-				vb := bestTile.Verts[bestPoly.Verts[j-1]*3:]
-				vc := bestTile.Verts[bestPoly.Verts[j]*3:]
+				va := bestTile.Verts[int(bestPoly.Verts[0])*3:]
+				vb := bestTile.Verts[int(bestPoly.Verts[j-1])*3:]
+				vc := bestTile.Verts[int(bestPoly.Verts[j])*3:]
 				polyArea += DtTriArea2D(va, vb, vc)
 			}
 			// Choose random polygon weighted by area, using reservoi sampling.
@@ -423,12 +423,12 @@ func (this *DtNavMeshQuery) FindRandomPointAroundCircle(startRef DtPolyRef, cent
 		return DT_FAILURE
 	}
 	// Randomly pick point on polygon.
-	v := randomTile.Verts[randomPoly.Verts[0]*3:]
+	v := randomTile.Verts[int(randomPoly.Verts[0])*3:]
 	var verts [3 * DT_VERTS_PER_POLYGON]float32
 	var areas [DT_VERTS_PER_POLYGON]float32
 	DtVcopy(verts[0*3:], v[:])
 	for j := 1; j < int(randomPoly.VertCount); j++ {
-		v = randomTile.Verts[randomPoly.Verts[j]*3:]
+		v = randomTile.Verts[int(randomPoly.Verts[j])*3:]
 		DtVcopy(verts[j*3:], v[:])
 	}
 
@@ -479,8 +479,8 @@ func (this *DtNavMeshQuery) ClosestPointOnPoly(ref DtPolyRef, pos, closest []flo
 	}
 	// Off-mesh connections don't have detail polygons.
 	if poly.GetType() == DT_POLYTYPE_OFFMESH_CONNECTION {
-		v0 := tile.Verts[poly.Verts[0]*3:]
-		v1 := tile.Verts[poly.Verts[1]*3:]
+		v0 := tile.Verts[int(poly.Verts[0])*3:]
+		v1 := tile.Verts[int(poly.Verts[1])*3:]
 		d0 := DtVdist(pos, v0)
 		d1 := DtVdist(pos, v1)
 		u := d0 / (d0 + d1)
@@ -502,7 +502,7 @@ func (this *DtNavMeshQuery) ClosestPointOnPoly(ref DtPolyRef, pos, closest []flo
 	var edget [DT_VERTS_PER_POLYGON]float32
 	nv := int(poly.VertCount)
 	for i := 0; i < nv; i++ {
-		DtVcopy(verts[i*3:], tile.Verts[poly.Verts[i]*3:])
+		DtVcopy(verts[i*3:], tile.Verts[int(poly.Verts[i])*3:])
 	}
 	DtVcopy(closest, pos)
 	if !DtDistancePtPolyEdgesSqr(pos, verts[:], nv, edged[:], edget[:]) {
@@ -534,7 +534,7 @@ func (this *DtNavMeshQuery) ClosestPointOnPoly(ref DtPolyRef, pos, closest []flo
 		var v [3][]float32
 		for k := 0; k < 3; k++ {
 			if t[k] < poly.VertCount {
-				v[k] = tile.Verts[poly.Verts[t[k]]*3:]
+				v[k] = tile.Verts[int(poly.Verts[t[k]])*3:]
 			} else {
 				v[k] = tile.DetailVerts[(pd.VertBase+uint32(t[k]-poly.VertCount))*3:]
 			}
@@ -580,7 +580,7 @@ func (this *DtNavMeshQuery) ClosestPointOnPolyBoundary(ref DtPolyRef, pos, close
 	var edget [DT_VERTS_PER_POLYGON]float32
 	nv := 0
 	for i := 0; i < int(poly.VertCount); i++ {
-		DtVcopy(verts[nv*3:], tile.Verts[poly.Verts[i]*3:])
+		DtVcopy(verts[nv*3:], tile.Verts[int(poly.Verts[i])*3:])
 		nv++
 	}
 
@@ -625,8 +625,8 @@ func (this *DtNavMeshQuery) GetPolyHeight(ref DtPolyRef, pos []float32, height *
 		return DT_FAILURE | DT_INVALID_PARAM
 	}
 	if poly.GetType() == DT_POLYTYPE_OFFMESH_CONNECTION {
-		v0 := tile.Verts[poly.Verts[0]*3:]
-		v1 := tile.Verts[poly.Verts[1]*3:]
+		v0 := tile.Verts[int(poly.Verts[0])*3:]
+		v1 := tile.Verts[int(poly.Verts[1])*3:]
 		d0 := DtVdist2D(pos, v0)
 		d1 := DtVdist2D(pos, v1)
 		u := d0 / (d0 + d1)
@@ -644,7 +644,7 @@ func (this *DtNavMeshQuery) GetPolyHeight(ref DtPolyRef, pos []float32, height *
 			var v [3][]float32
 			for k := 0; k < 3; k++ {
 				if t[k] < poly.VertCount {
-					v[k] = tile.Verts[poly.Verts[t[k]]*3:]
+					v[k] = tile.Verts[int(poly.Verts[t[k]])*3:]
 				} else {
 					v[k] = tile.DetailVerts[(pd.VertBase+uint32(t[k]-poly.VertCount))*3:]
 				}
@@ -826,11 +826,11 @@ func (this *DtNavMeshQuery) queryPolygonsInTile(tile *DtMeshTile, qmin, qmax []f
 				continue
 			}
 			// Calc polygon bounds.
-			v := tile.Verts[p.Verts[0]*3:]
+			v := tile.Verts[int(p.Verts[0])*3:]
 			DtVcopy(bmin[:], v)
 			DtVcopy(bmax[:], v)
 			for j := 1; j < int(p.VertCount); j++ {
-				v = tile.Verts[p.Verts[j]*3:]
+				v = tile.Verts[int(p.Verts[j])*3:]
 				DtVmin(bmin[:], v)
 				DtVmax(bmax[:], v)
 			}
@@ -2097,7 +2097,7 @@ func (this *DtNavMeshQuery) MoveAlongSurface(startRef DtPolyRef, startPos, endPo
 		// Collect vertices.
 		nverts := int(curPoly.VertCount)
 		for i := 0; i < nverts; i++ {
-			DtVcopy(verts[i*3:], curTile.Verts[curPoly.Verts[i]*3:])
+			DtVcopy(verts[i*3:], curTile.Verts[int(curPoly.Verts[i])*3:])
 		}
 		// If target is inside the poly, stop search.
 		if DtPointInPolygon(endPos, verts[:], nverts) {
@@ -2262,8 +2262,8 @@ func (this *DtNavMeshQuery) getPortalPoints2(from DtPolyRef, fromPoly *DtPoly, f
 		for i := fromPoly.FirstLink; i != DT_NULL_LINK; i = fromTile.Links[i].Next {
 			if fromTile.Links[i].Ref == to {
 				v := fromTile.Links[i].Edge
-				DtVcopy(left, fromTile.Verts[fromPoly.Verts[v]*3:])
-				DtVcopy(right, fromTile.Verts[fromPoly.Verts[v]*3:])
+				DtVcopy(left, fromTile.Verts[int(fromPoly.Verts[v])*3:])
+				DtVcopy(right, fromTile.Verts[int(fromPoly.Verts[v])*3:])
 				return DT_SUCCESS
 			}
 		}
@@ -2274,8 +2274,8 @@ func (this *DtNavMeshQuery) getPortalPoints2(from DtPolyRef, fromPoly *DtPoly, f
 		for i := toPoly.FirstLink; i != DT_NULL_LINK; i = toTile.Links[i].Next {
 			if toTile.Links[i].Ref == from {
 				v := toTile.Links[i].Edge
-				DtVcopy(left, toTile.Verts[toPoly.Verts[v]*3:])
-				DtVcopy(right, toTile.Verts[toPoly.Verts[v]*3:])
+				DtVcopy(left, toTile.Verts[int(toPoly.Verts[v])*3:])
+				DtVcopy(right, toTile.Verts[int(toPoly.Verts[v])*3:])
 				return DT_SUCCESS
 			}
 		}
@@ -2283,8 +2283,8 @@ func (this *DtNavMeshQuery) getPortalPoints2(from DtPolyRef, fromPoly *DtPoly, f
 	}
 
 	// Find portal vertices.
-	v0 := fromPoly.Verts[link.Edge]
-	v1 := fromPoly.Verts[int(link.Edge+1)%(int)(fromPoly.VertCount)]
+	v0 := int(fromPoly.Verts[link.Edge])
+	v1 := int(fromPoly.Verts[int(link.Edge+1)%(int)(fromPoly.VertCount)])
 	DtVcopy(left, fromTile.Verts[v0*3:])
 	DtVcopy(right, fromTile.Verts[v1*3:])
 
@@ -2498,7 +2498,7 @@ func (this *DtNavMeshQuery) Raycast2(startRef DtPolyRef, startPos, endPos []floa
 		// Collect vertices.
 		nv := 0
 		for i := 0; i < (int)(poly.VertCount); i++ {
-			DtVcopy(verts[nv*3:], tile.Verts[poly.Verts[i]*3:])
+			DtVcopy(verts[nv*3:], tile.Verts[int(poly.Verts[i])*3:])
 			nv++
 		}
 
@@ -2573,8 +2573,8 @@ func (this *DtNavMeshQuery) Raycast2(startRef DtPolyRef, startPos, endPos []floa
 			}
 
 			// Check for partial edge links.
-			v0 := poly.Verts[link.Edge]
-			v1 := poly.Verts[(link.Edge+1)%poly.VertCount]
+			v0 := int(poly.Verts[link.Edge])
+			v1 := int(poly.Verts[(link.Edge+1)%poly.VertCount])
 			left := tile.Verts[v0*3:]
 			right := tile.Verts[v1*3:]
 
@@ -3202,7 +3202,7 @@ func (this *DtNavMeshQuery) FindLocalNeighbourhood(startRef DtPolyRef, centerPos
 			// Collect vertices of the neighbour poly.
 			npa := int(neighbourPoly.VertCount)
 			for k := 0; k < npa; k++ {
-				DtVcopy(pa[k*3:], neighbourTile.Verts[neighbourPoly.Verts[k]*3:])
+				DtVcopy(pa[k*3:], neighbourTile.Verts[int(neighbourPoly.Verts[k])*3:])
 			}
 			overlap := false
 			for j := 0; j < n; j++ {
@@ -3227,7 +3227,7 @@ func (this *DtNavMeshQuery) FindLocalNeighbourhood(startRef DtPolyRef, centerPos
 				// Get vertices and test overlap
 				npb := int(pastPoly.VertCount)
 				for k := 0; k < npb; k++ {
-					DtVcopy(pb[k*3:], pastTile.Verts[pastPoly.Verts[k]*3:])
+					DtVcopy(pb[k*3:], pastTile.Verts[int(pastPoly.Verts[k])*3:])
 				}
 				if DtOverlapPolyPoly2D(pa[:], npa, pb[:], npb) {
 					overlap = true
@@ -3366,8 +3366,8 @@ func (this *DtNavMeshQuery) GetPolyWallSegments(ref DtPolyRef, filter *DtQueryFi
 				continue
 			}
 			if n < maxSegments {
-				vj := tile.Verts[poly.Verts[j]*3:]
-				vi := tile.Verts[poly.Verts[i]*3:]
+				vj := tile.Verts[int(poly.Verts[j])*3:]
+				vi := tile.Verts[int(poly.Verts[i])*3:]
 				seg := segmentVerts[n*6:]
 				DtVcopy(seg[0:], vj)
 				DtVcopy(seg[3:], vi)
@@ -3387,8 +3387,8 @@ func (this *DtNavMeshQuery) GetPolyWallSegments(ref DtPolyRef, filter *DtQueryFi
 		insertInterval(ints[:], &nints, MAX_INTERVAL, 255, 256, 0)
 
 		// Store segments.
-		vj := tile.Verts[poly.Verts[j]*3:]
-		vi := tile.Verts[poly.Verts[i]*3:]
+		vj := tile.Verts[int(poly.Verts[j])*3:]
+		vi := tile.Verts[int(poly.Verts[i])*3:]
 		for k := 1; k < nints; k++ {
 			// Portal segment.
 			if storePortals && ints[k].ref != 0 {
@@ -3535,8 +3535,8 @@ func (this *DtNavMeshQuery) FindDistanceToWall(startRef DtPolyRef, centerPos []f
 			}
 
 			// Calc distance to the edge.
-			vj := bestTile.Verts[bestPoly.Verts[j]*3:]
-			vi := bestTile.Verts[bestPoly.Verts[i]*3:]
+			vj := bestTile.Verts[int(bestPoly.Verts[j])*3:]
+			vi := bestTile.Verts[int(bestPoly.Verts[i])*3:]
 			var tseg float32
 			distSqr := DtDistancePtSegSqr2D(centerPos, vj, vi, &tseg)
 
@@ -3569,8 +3569,8 @@ func (this *DtNavMeshQuery) FindDistanceToWall(startRef DtPolyRef, centerPos []f
 				continue
 			}
 			// Calc distance to the edge.
-			va := bestTile.Verts[bestPoly.Verts[link.Edge]*3:]
-			vb := bestTile.Verts[bestPoly.Verts[(link.Edge+1)%bestPoly.VertCount]*3:]
+			va := bestTile.Verts[int(bestPoly.Verts[link.Edge])*3:]
+			vb := bestTile.Verts[int(bestPoly.Verts[(link.Edge+1)%bestPoly.VertCount])*3:]
 			var tseg float32
 			distSqr := DtDistancePtSegSqr2D(centerPos, va, vb, &tseg)
 

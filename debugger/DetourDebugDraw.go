@@ -65,15 +65,15 @@ func drawPolyBoundaries(dd duDebugDraw, tile *detour.DtMeshTile, col uint32, lin
 				}
 			}
 
-			var v0 = tile.Verts[p.Verts[j]*3:]
-			var v1 = tile.Verts[p.Verts[(j+1)%int(nj)]*3:]
+			var v0 = tile.Verts[int(p.Verts[j])*3:]
+			var v1 = tile.Verts[int(p.Verts[(j+1)%int(nj)])*3:]
 
 			for k := 0; k < int(pd.TriCount); k += 1 {
 				var t = tile.DetailTris[(int(pd.TriBase)+k)*4:]
 				var tv [3][]float32
 				for m := 0; m < 3; m += 1 {
 					if t[m] < p.VertCount {
-						tv[m] = tile.Verts[p.Verts[t[m]]*3:]
+						tv[m] = tile.Verts[int(p.Verts[t[m]])*3:]
 					} else {
 						tv[m] = tile.DetailVerts[(int(pd.VertBase)+int(t[m])-int(p.VertCount))*3:]
 					}
@@ -125,7 +125,7 @@ func drawMeshTile(dd duDebugDraw, mesh *detour.DtNavMesh, query *detour.DtNavMes
 			var t = tile.DetailTris[(int(pd.TriBase)+j)*4:]
 			for k := 0; k < 3; k += 1 {
 				if t[k] < p.VertCount {
-					dd.vertex0(tile.Verts[p.Verts[t[k]]*3:], col)
+					dd.vertex0(tile.Verts[int(p.Verts[t[k]])*3:], col)
 				} else {
 					dd.vertex0(tile.DetailVerts[(int(pd.VertBase)+int(t[k])-int(p.VertCount))*3:], col)
 				}
@@ -156,8 +156,8 @@ func drawMeshTile(dd duDebugDraw, mesh *detour.DtNavMesh, query *detour.DtNavMes
 			}
 
 			var con = &tile.OffMeshCons[i-int(tile.Header.OffMeshBase)]
-			var va = tile.Verts[p.Verts[0]*3:]
-			var vb = tile.Verts[p.Verts[1]*3:]
+			var va = tile.Verts[int(p.Verts[0])*3:]
+			var vb = tile.Verts[int(p.Verts[1])*3:]
 
 			var startSet bool
 			var endSet bool
