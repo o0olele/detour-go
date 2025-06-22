@@ -70,5 +70,9 @@
 - mouse right click to set agent position.
 - mouse left click to set agent target position.
 
+## Compare
+- [octree-go](https://github.com/o0olele/octree-go)
+  path-finding for 3d scene like water and sky.
+
 ## Doc
 - view [recast navigation](https://recastnav.com/) for detour use.
