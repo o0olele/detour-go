@@ -57,6 +57,7 @@
 - using web interface to view and debug navmesh
 
     ![debugger](./examples/assets/debugger.png)
+    you can also try [workbench-go](https://github.com/o0olele/workbench-go) to view and debug navmesh.
 
 - usage
 
