@@ -1,20 +1,44 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"github.com/o0olele/detour-go/debugger"
 )
 
+// CORS middleware
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
-	r := gin.Default()
-	r.Use(cors.Default())
-	r.StaticFS("/public", http.Dir("./public"))
+	// Create the debugger server
+	server := debugger.NewServer()
 
-	server := debugger.NewServer(r)
-	_ = server
+	// Create main mux
+	mux := http.NewServeMux()
 
-	r.Run(":9001")
+	// Serve static files
+	mux.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("./public"))))
+
+	// Mount the debugger server routes
+	mux.Handle("/", server)
+
+	// Apply CORS middleware
+	handler := corsMiddleware(mux)
+
+	log.Println("Server starting on :9001")
+	log.Fatal(http.ListenAndServe(":9001", handler))
 }

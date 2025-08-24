@@ -1,75 +1,70 @@
+// Package dtcrowd converted from recastnavigation/DetourCrowd, implement local
+// steering and dynamic avoidance features
 package dtcrowd
 
 import detour "github.com/o0olele/detour-go/detour"
 
-/// The maximum number of neighbors that a crowd agent can take into account
-/// for steering decisions.
-/// @ingroup crowd
+// The maximum number of neighbors that a crowd agent can take into account
+// for steering decisions.
 const DT_CROWDAGENT_MAX_NEIGHBOURS int = 6
 
-/// The maximum number of corners a crowd agent will look ahead in the path.
-/// This value is used for sizing the crowd agent corner buffers.
-/// Due to the behavior of the crowd manager, the actual number of useful
-/// corners will be one less than this number.
-/// @ingroup crowd
+// The maximum number of corners a crowd agent will look ahead in the path.
+// This value is used for sizing the crowd agent corner buffers.
+// Due to the behavior of the crowd manager, the actual number of useful
+// corners will be one less than this number.
 const DT_CROWDAGENT_MAX_CORNERS int = 4
 
-/// The maximum number of crowd avoidance configurations supported by the
-/// crowd manager.
-/// @ingroup crowd
-/// @see dtObstacleAvoidanceParams, dtCrowd::setObstacleAvoidanceParams(), dtCrowd::getObstacleAvoidanceParams(),
+// The maximum number of crowd avoidance configurations supported by the
+// crowd manager.
+// @see dtObstacleAvoidanceParams, dtCrowd::setObstacleAvoidanceParams(), dtCrowd::getObstacleAvoidanceParams(),
 ///		 dtCrowdAgentParams::obstacleAvoidanceType
 const DT_CROWD_MAX_OBSTAVOIDANCE_PARAMS int = 8
 
-/// The maximum number of query filter types supported by the crowd manager.
-/// @ingroup crowd
-/// @see dtQueryFilter, dtCrowd::getFilter() dtCrowd::getEditableFilter(),
+// The maximum number of query filter types supported by the crowd manager.
+// @see dtQueryFilter, dtCrowd::getFilter() dtCrowd::getEditableFilter(),
 ///		dtCrowdAgentParams::queryFilterType
 const DT_CROWD_MAX_QUERY_FILTER_TYPE int = 16
 
-/// Provides neighbor data for agents managed by the crowd.
-/// @ingroup crowd
-/// @see dtCrowdAgent::neis, dtCrowd
+// DtCrowdNeighbour provides neighbor data for agents managed by the crowd.
+// @see dtCrowdAgent::neis, dtCrowd
 type DtCrowdNeighbour struct {
 	idx  int     ///< The index of the neighbor in the crowd.
 	dist float32 ///< The distance between the current agent and the neighbor.
 }
 
-/// The type of navigation mesh polygon the agent is currently traversing.
-/// @ingroup crowd
+// The type of navigation mesh polygon the agent is currently traversing.
 type CrowdAgentState int
 
 const DT_CROWDAGENT_STATE_INVALID CrowdAgentState = 0 ///< The agent is not in a valid state.
 const DT_CROWDAGENT_STATE_WALKING CrowdAgentState = 1 ///< The agent is traversing a normal navigation mesh polygon.
 const DT_CROWDAGENT_STATE_OFFMESH CrowdAgentState = 2 ///< The agent is traversing an off-mesh connection.
 
-/// Configuration parameters for a crowd agent.
-/// @ingroup crowd
+// Configuration parameters for a crowd agent.
 type DtCrowdAgentParams struct {
 	radius          float32 ///< Agent radius. [Limit: >= 0]
 	height          float32 ///< Agent height. [Limit: > 0]
 	maxAcceleration float32 ///< Maximum allowed acceleration. [Limit: >= 0]
 	maxSpeed        float32 ///< Maximum allowed speed. [Limit: >= 0]
 
-	/// Defines how close a collision element must be before it is considered for steering behaviors. [Limits: > 0]
+	// Defines how close a collision element must be before it is considered for steering behaviors. [Limits: > 0]
 	collisionQueryRange float32
 
 	pathOptimizationRange float32 ///< The path visibility optimization range. [Limit: > 0]
 
-	/// How aggresive the agent manager should be at avoiding collisions with this agent. [Limit: >= 0]
+	// How aggresive the agent manager should be at avoiding collisions with this agent. [Limit: >= 0]
 	separationWeight float32
 
-	/// Flags that impact steering behavior. (See: #UpdateFlags)
+	// Flags that impact steering behavior. (See: #UpdateFlags)
 	updateFlags UpdateFlags
 
-	/// The index of the avoidance configuration to use for the agent.
-	/// [Limits: 0 <= value <= #DT_CROWD_MAX_OBSTAVOIDANCE_PARAMS]
+	// The index of the avoidance configuration to use for the agent.
+	// [Limits: 0 <= value <= #DT_CROWD_MAX_OBSTAVOIDANCE_PARAMS]
 	obstacleAvoidanceType uint8
 
-	/// The index of the query filter used by this agent.
+	// The index of the query filter used by this agent.
 	queryFilterType uint8
 
-	/// User defined data attached to the agent.
+	// User defined data attached to the agent.
 	userData []byte
 }
 
@@ -128,34 +123,33 @@ const DT_CROWDAGENT_TARGET_WAITING_FOR_QUEUE MoveRequestState = 4
 const DT_CROWDAGENT_TARGET_WAITING_FOR_PATH MoveRequestState = 5
 const DT_CROWDAGENT_TARGET_VELOCITY MoveRequestState = 6
 
-/// Represents an agent managed by a #dtCrowd object.
-/// @ingroup crowd
+// Represents an agent managed by a #dtCrowd object.
 type DtCrowdAgent struct {
-	/// True if the agent is active, false if the agent is in an unused slot in the agent pool.
+	// True if the agent is active, false if the agent is in an unused slot in the agent pool.
 	active bool
 
-	/// The type of mesh polygon the agent is traversing. (See: #CrowdAgentState)
+	// The type of mesh polygon the agent is traversing. (See: #CrowdAgentState)
 	state CrowdAgentState
 
-	/// True if the agent has valid path (targetState == DT_CROWDAGENT_TARGET_VALID) and the path does not lead to the requested position, else false.
+	// True if the agent has valid path (targetState == DT_CROWDAGENT_TARGET_VALID) and the path does not lead to the requested position, else false.
 	partial bool
 
-	/// The path corridor the agent is using.
+	// The path corridor the agent is using.
 	corridor DtPathCorridor
 
-	/// The local boundary data for the agent.
+	// The local boundary data for the agent.
 	boundary DtLocalBoundary
 
-	/// Time since the agent's path corridor was optimized.
+	// Time since the agent's path corridor was optimized.
 	topologyOptTime float32
 
-	/// The known neighbors of the agent.
+	// The known neighbors of the agent.
 	neis [DT_CROWDAGENT_MAX_NEIGHBOURS]DtCrowdNeighbour
 
-	/// The number of neighbors.
+	// The number of neighbors.
 	nneis int
 
-	/// The desired speed.
+	// The desired speed.
 	desiredSpeed float32
 
 	npos [3]float32 ///< The current agent position. [(x, y, z)]
@@ -164,19 +158,19 @@ type DtCrowdAgent struct {
 	nvel [3]float32 ///< The desired velocity adjusted by obstacle avoidance, calculated from scratch each frame. [(x, y, z)]
 	vel  [3]float32 ///< The actual velocity of the agent. The change from nvel -> vel is constrained by max acceleration. [(x, y, z)]
 
-	/// The agent's configuration parameters.
+	// The agent's configuration parameters.
 	params DtCrowdAgentParams
 
-	/// The local path corridor corners for the agent. (Staight path.) [(x, y, z) * #ncorners]
+	// The local path corridor corners for the agent. (Staight path.) [(x, y, z) * #ncorners]
 	cornerVerts [DT_CROWDAGENT_MAX_CORNERS * 3]float32
 
-	/// The local path corridor corner flags. (See: #dtStraightPathFlags) [(flags) * #ncorners]
+	// The local path corridor corner flags. (See: #dtStraightPathFlags) [(flags) * #ncorners]
 	cornerFlags [DT_CROWDAGENT_MAX_CORNERS]detour.DtStraightPathFlags
 
-	/// The reference id of the polygon being entered at the corner. [(polyRef) * #ncorners]
+	// The reference id of the polygon being entered at the corner. [(polyRef) * #ncorners]
 	cornerPolys [DT_CROWDAGENT_MAX_CORNERS]detour.DtPolyRef
 
-	/// The number of corners.
+	// The number of corners.
 	ncorners int
 
 	targetState      MoveRequestState ///< State of the movement request.
@@ -184,7 +178,7 @@ type DtCrowdAgent struct {
 	targetPos        [3]float32       ///< Target position of the movement request (or velocity in case of DT_CROWDAGENT_TARGET_VELOCITY).
 	targetPathqRef   DtPathQueueRef   ///< Path finder ref.
 	targetReplan     bool             ///< Flag indicating that the current path is being replanned.
-	targetReplanTime float32          /// <Time since the agent's target was replanned.
+	targetReplanTime float32          // <Time since the agent's target was replanned.
 }
 
 func (agent *DtCrowdAgent) GetCurrentPos() []float32 {
@@ -205,9 +199,8 @@ type DtCrowdAgentAnimation struct {
 	tmax     float32
 }
 
-/// Crowd agent update flags.
-/// @ingroup crowd
-/// @see dtCrowdAgentParams::updateFlags
+// Crowd agent update flags.
+// @see dtCrowdAgentParams::updateFlags
 type UpdateFlags uint8
 
 const (
@@ -225,8 +218,7 @@ type DtCrowdAgentDebugInfo struct {
 	vod      *DtObstacleAvoidanceDebugData
 }
 
-/// Provides local steering behaviors for a group of agents.
-/// @ingroup crowd
+// Provides local steering behaviors for a group of agents.
 type DtCrowd struct {
 	m_maxAgents    int
 	m_agents       []DtCrowdAgent
