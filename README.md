@@ -64,7 +64,7 @@
     cd ./examples/web
     go run main.go
     ~~~
-
+- open `http://localhost:9001/public` in browser.
 - first click `LoadTileMesh` or `LoadTempObstacle` to upload mesh binary data.
 - click `Add Agent` to init an agent.
 - mouse right click to set agent position.
