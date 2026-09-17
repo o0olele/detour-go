@@ -308,6 +308,9 @@ func (this *DtCrowd) Init(maxAgents int, maxAgentRadius float32, nav *detour.DtN
 	this.m_agentAnims = make([]DtCrowdAgentAnimation, this.m_maxAgents)
 
 	for i := 0; i < this.m_maxAgents; i += 1 {
+		// The pool index is a property of the slot, so it only ever needs to be
+		// written here; getAgentIndex() then reads it in O(1).
+		this.m_agents[i].idx = i
 		this.m_agents[i].active = false
 		if !this.m_agents[i].corridor.Init(this.m_maxPathResult) {
 			return false

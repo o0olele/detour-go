@@ -125,6 +125,16 @@ const DT_CROWDAGENT_TARGET_VELOCITY MoveRequestState = 6
 
 // Represents an agent managed by a #dtCrowd object.
 type DtCrowdAgent struct {
+	// The index of this agent in the owner's agent pool.
+	//
+	// In the C++ original the pool index is recovered with
+	// `(int)(agent - m_agents)`, which is constant time. The Go port cannot do
+	// pointer arithmetic on a slice of values, and a linear scan over the pool
+	// was costing O(maxAgents) per call at ~36 call sites per agent per frame
+	// (including inside the 4-iteration collision resolution loop). Storing the
+	// index on the slot restores the C++ cost.
+	idx int
+
 	// True if the agent is active, false if the agent is in an unused slot in the agent pool.
 	active bool
 
@@ -246,13 +256,16 @@ type DtCrowd struct {
 	m_navquery *detour.DtNavMeshQuery
 }
 
+// Returns the pool index of an agent managed by this crowd.
+//
+// Equivalent to the C++ `dtCrowd::getAgentIndex()`, which is a pointer
+// subtraction, but O(1) by construction here because each pool slot caches its
+// own index.
 func (this *DtCrowd) getAgentIndex(agent *DtCrowdAgent) int {
-	for i := range this.m_agents {
-		if &this.m_agents[i] == agent {
-			return i
-		}
+	if agent == nil {
+		return -1
 	}
-	return -1
+	return agent.idx
 }
 
 func (this *DtCrowd) GetFilter(i int) *detour.DtQueryFilter {

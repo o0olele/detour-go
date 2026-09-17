@@ -663,17 +663,27 @@ func (this *DtNavMeshQuery) GetPolyHeight(ref DtPolyRef, pos []float32, height *
 }
 
 type dtFindNearestPolyQuery struct {
-	m_query              *DtNavMeshQuery
-	m_center             []float32
+	m_query *DtNavMeshQuery
+	// Stored by value rather than as a slice of the caller's array: holding a
+	// []float32 here would make the caller's center array escape to the heap
+	// (one allocation per findNearestPoly call).
+	m_center             [3]float32
 	m_nearestDistanceSqr float32
 	m_nearestRef         DtPolyRef
 	m_nearestPoint       [3]float32
 }
 
+// Resets this query for a new search.
+//
+// Note: every piece of mutable state is re-initialized here (as the C++
+// constructor does). Callers may reuse a single instance across calls, so it
+// must not rely on a freshly zero-valued struct.
 func (this *dtFindNearestPolyQuery) constructor(query *DtNavMeshQuery, center []float32) {
 	this.m_query = query
-	this.m_center = center
+	DtVcopy(this.m_center[:], center)
 	this.m_nearestDistanceSqr = float32(math.MaxFloat32)
+	this.m_nearestRef = 0
+	this.m_nearestPoint = [3]float32{}
 }
 
 func (this *dtFindNearestPolyQuery) nearestRef() DtPolyRef   { return this.m_nearestRef }
@@ -687,11 +697,11 @@ func (this *dtFindNearestPolyQuery) Process(tile *DtMeshTile, polys []*DtPoly, r
 		var diff [3]float32
 		posOverPoly := false
 		var d float32
-		this.m_query.ClosestPointOnPoly(ref, this.m_center, closestPtPoly[:], &posOverPoly)
+		this.m_query.ClosestPointOnPoly(ref, this.m_center[:], closestPtPoly[:], &posOverPoly)
 
 		// If a point is directly over a polygon and closer than
 		// climb height, favor that instead of straight line nearest point.
-		DtVsub(diff[:], this.m_center, closestPtPoly[:])
+		DtVsub(diff[:], this.m_center[:], closestPtPoly[:])
 		if posOverPoly {
 			d = DtAbsFloat32(diff[1]) - tile.Header.WalkableClimb
 			if d > 0 {
@@ -733,10 +743,12 @@ func (this *DtNavMeshQuery) FindNearestPoly(center, halfExtents []float32,
 	if nearestRef == nil {
 		return DT_FAILURE | DT_INVALID_PARAM
 	}
-	query := dtFindNearestPolyQuery{}
+	// Reuse the object-owned instance so that &query does not escape to the
+	// heap. See the comment on DtNavMeshQuery in DetourNavMeshQuery.go.
+	query := &this.m_findNearestPolyQuery
 	query.constructor(this, center)
 
-	status := this.QueryPolygons2(center, halfExtents, filter, &query)
+	status := this.QueryPolygons2(center, halfExtents, filter, query)
 	if DtStatusFailed(status) {
 		return status
 	}
@@ -753,9 +765,12 @@ func (this *DtNavMeshQuery) FindNearestPoly(center, halfExtents []float32,
 func (this *DtNavMeshQuery) queryPolygonsInTile(tile *DtMeshTile, qmin, qmax []float32,
 	filter *DtQueryFilter, query DtPolyQuery) {
 	DtAssert(this.m_nav != nil)
-	const batchSize int = 32
-	var polyRefs [batchSize]DtPolyRef
-	var polys [batchSize]*DtPoly
+	// These are object-owned scratch buffers rather than locals so that they do
+	// not escape to the heap through the DtPolyQuery interface call below.
+	// See the comment on DtNavMeshQuery in DetourNavMeshQuery.go.
+	const batchSize int = DT_POLY_QUERY_BATCH_SIZE
+	polyRefs := this.m_polyBatchRefs[:]
+	polys := this.m_polyBatchPolys[:]
 	n := 0
 
 	if tile.BvTree != nil {
@@ -861,9 +876,16 @@ type dtCollectPolysQuery struct {
 	m_overflow     bool
 }
 
+// Resets this query to collect into polys.
+//
+// Note: every piece of mutable state is re-initialized here (as the C++
+// constructor does). Callers may reuse a single instance across calls, so it
+// must not rely on a freshly zero-valued struct.
 func (this *dtCollectPolysQuery) constructor(polys []DtPolyRef, maxPolys int) {
 	this.m_polys = polys
 	this.m_maxPolys = maxPolys
+	this.m_numCollected = 0
+	this.m_overflow = false
 }
 
 func (this *dtCollectPolysQuery) numCollected() int { return this.m_numCollected }
@@ -905,15 +927,20 @@ func (this *DtNavMeshQuery) QueryPolygons(center, halfExtents []float32,
 	if polys == nil || polyCount == nil || maxPolys < 0 {
 		return DT_FAILURE | DT_INVALID_PARAM
 	}
-	collector := dtCollectPolysQuery{}
+	// Reuse the object-owned instance so that &collector does not escape to the
+	// heap. See the comment on DtNavMeshQuery in DetourNavMeshQuery.go.
+	collector := &this.m_collectPolysQuery
 	collector.constructor(polys, maxPolys)
 
-	status := this.QueryPolygons2(center, halfExtents, filter, &collector)
+	status := this.QueryPolygons2(center, halfExtents, filter, collector)
 	if DtStatusFailed(status) {
 		return status
 	}
 	*polyCount = collector.numCollected()
-	if collector.overflowed() {
+	overflowed := collector.overflowed()
+	// Drop the reference to the caller's output slice.
+	collector.m_polys = nil
+	if overflowed {
 		return DT_SUCCESS | DT_BUFFER_TOO_SMALL
 	} else {
 		return DT_SUCCESS

@@ -19,7 +19,6 @@
 package detour
 
 import (
-	"math"
 	"reflect"
 	"unsafe"
 )
@@ -611,6 +610,11 @@ var EPS float32 = 1e-4
 // /  @param[in]		c		Vertex C of triangle ABC. [(x, y, z)]
 // /  @param[out]	h		The resulting height.
 func DtClosestHeightPointTriangle(p, a, b, c []float32, h *float32) bool {
+	// Clamp the lengths to 3 so the accesses below are not bounds-checked.
+	p = p[:3:3]
+	a = a[:3:3]
+	b = b[:3:3]
+	c = c[:3:3]
 	v0 := [3]float32{}
 	v1 := [3]float32{}
 	v2 := [3]float32{}
@@ -658,7 +662,7 @@ func DtIntersectSegmentPoly2D(p0, p1, verts []float32, nverts int, tmin, tmax *f
 		DtVsub(diff[:], p0, verts[j*3:])
 		n := DtVperp2D(edge[:], diff[:])
 		d := DtVperp2D(dir[:], edge[:])
-		if math.Abs(float64(d)) < 0.00000001 {
+		if DtAbsFloat32(d) < 0.00000001 {
 			// S is nearly parallel to this edge
 			if n < 0 {
 				return false
@@ -705,7 +709,7 @@ func DtIntersectSegSeg2D(ap, aq, bp, bq []float32, s, t *float32) bool {
 	DtVsub(v[:], bq, bp)
 	DtVsub(w[:], ap, bp)
 	d := vperpXZ(u[:], v[:])
-	if math.Abs(float64(d)) < 1e-6 {
+	if DtAbsFloat32(d) < 1e-6 {
 		return false
 	}
 	*s = vperpXZ(v[:], w[:]) / d
@@ -733,6 +737,12 @@ func DtPointInPolygon(pt, verts []float32, nverts int) bool {
 }
 
 func DtDistancePtSegSqr2D(pt, p, q []float32, t *float32) float32 {
+	// Clamp the lengths to 3. The compiler can then see that every access below
+	// is in range and drop the bounds checks (this function is the single
+	// hottest leaf in the query profile).
+	pt = pt[:3:3]
+	p = p[:3:3]
+	q = q[:3:3]
 	pqx := q[0] - p[0]
 	pqz := q[2] - p[2]
 	dx := pt[0] - p[0]
@@ -753,11 +763,15 @@ func DtDistancePtSegSqr2D(pt, p, q []float32, t *float32) float32 {
 }
 
 func DtDistancePtPolyEdgesSqr(pt, verts []float32, nverts int, ed, et []float32) bool {
+	// Tell the compiler the lengths so the per-edge accesses are not
+	// bounds-checked. See DtDistancePtSegSqr2D.
+	pt = pt[:3:3]
+	verts = verts[: nverts*3 : nverts*3]
 	var i, j int
 	c := false
 	for i, j = 0, nverts-1; i < nverts; j, i = i, i+1 {
-		vi := verts[i*3:]
-		vj := verts[j*3:]
+		vi := verts[i*3 : i*3+3 : i*3+3]
+		vj := verts[j*3 : j*3+3 : j*3+3]
 		if ((vi[2] > pt[2]) != (vj[2] > pt[2])) &&
 			(pt[0] < (vj[0]-vi[0])*(pt[2]-vi[2])/(vj[2]-vi[2])+vi[0]) {
 			c = !c
@@ -1023,14 +1037,37 @@ A negative return value indicates:
 
 */
 
+// Fills size bytes starting at mem with val.
+//
+// This replaces a byte-at-a-time loop. Go's compiler does not lower a
+// variable-valued byte loop into a bulk fill, so the old version cost about
+// 0.6 ns/byte (roughly 29 us for the 48 KB polygon array of a tile-cache
+// rebuild). A zero fill uses the zeroing loop that the compiler turns into
+// memclr; a non-zero fill uses a doubling copy, which is O(log n) memmoves.
 func Memset(mem uintptr, val uint8, size int) {
+	if size <= 0 {
+		return
+	}
+	// The SliceHeader construction is kept from the original implementation:
+	// building the slice from unsafe.Slice((*byte)(unsafe.Pointer(mem)), size)
+	// would be cleaner but trips go vet's "possible misuse of unsafe.Pointer".
 	var dst []byte
 	sliceHeader := (*reflect.SliceHeader)((unsafe.Pointer(&dst)))
 	sliceHeader.Cap = size
 	sliceHeader.Len = size
 	sliceHeader.Data = mem
-	for i := 0; i < size; i++ {
-		dst[i] = val
+
+	if val == 0 {
+		// The compiler recognises this loop and emits a bulk memclr.
+		// (The clear() builtin would require go.mod to demand go1.21.)
+		for i := range dst {
+			dst[i] = 0
+		}
+		return
+	}
+	dst[0] = val
+	for n := 1; n < size; n *= 2 {
+		copy(dst[n:], dst[:n])
 	}
 }
 

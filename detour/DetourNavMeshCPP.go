@@ -24,8 +24,11 @@ import (
 	"unsafe"
 )
 
-var sizeofMeshTile uint32 = (uint32)(unsafe.Sizeof(DtMeshTile{}))
-var sizeofPoly uint32 = (uint32)(unsafe.Sizeof(DtPoly{}))
+// Declared as constants (not vars) so that the divisions using them at
+// closestPointOnPoly()/getTileAndPolyByRefUnsafe() are strength-reduced by the
+// compiler instead of emitting a runtime integer division.
+const sizeofMeshTile uint32 = (uint32)(unsafe.Sizeof(DtMeshTile{}))
+const sizeofPoly uint32 = (uint32)(unsafe.Sizeof(DtPoly{}))
 
 func overlapSlabs(amin, amax, bmin, bmax []float32, px, py float32) bool {
 	// Check for horizontal overlap.

@@ -68,8 +68,10 @@ func (this *DtProximityGrid) addItem(id uint16, minx, miny, maxx, maxy float32) 
 
 	this.m_bounds[0] = detour.DtMinInt(this.m_bounds[0], iminx)
 	this.m_bounds[1] = detour.DtMinInt(this.m_bounds[1], iminy)
-	this.m_bounds[2] = detour.DtMinInt(this.m_bounds[2], imaxx)
-	this.m_bounds[3] = detour.DtMinInt(this.m_bounds[3], imaxy)
+	// Note: C++ (DetourProximityGrid.cpp:113-114) uses dtMax for the upper
+	// bounds; the port used dtMin for all four.
+	this.m_bounds[2] = detour.DtMaxInt(this.m_bounds[2], imaxx)
+	this.m_bounds[3] = detour.DtMaxInt(this.m_bounds[3], imaxy)
 
 	var h int
 	var idx uint16

@@ -124,12 +124,40 @@ type dtQueryData struct {
 	raycastLimitSqr  float32
 }
 
+// / The number of polygons queryPolygonsInTile() batches together before
+// / handing them to a #DtPolyQuery. (Matches the C++ original.)
+const DT_POLY_QUERY_BATCH_SIZE = 32
+
 type DtNavMeshQuery struct {
 	m_nav          *DtNavMesh   ///< Pointer to navmesh data.
 	m_query        dtQueryData  ///< Sliced query state.
 	m_tinyNodePool *DtNodePool  ///< Pointer to small node pool.
 	m_nodePool     *DtNodePool  ///< Pointer to node pool.
 	m_openList     *DtNodeQueue ///< Pointer to open list queue.
+
+	/// @name Scratch state for the polygon query path.
+	///@{
+	/// In the C++ original these are plain stack locals. In Go they would be
+	/// passed as slices to the #DtPolyQuery interface method, and because the
+	/// compiler cannot prove that an interface method does not retain its
+	/// arguments, every queryPolygons()/findNearestPoly() call would heap
+	/// allocate the two batch arrays plus the query object itself (measured:
+	/// 3-4 allocations, ~450 B per call). Keeping them on the query object
+	/// keeps that hot path allocation free.
+	///
+	/// Consequence: like findPath()/moveAlongSurface()/raycast(), which already
+	/// share m_nodePool/m_openList, these methods make a DtNavMeshQuery instance
+	/// unsuitable for concurrent use. Additionally a custom #DtPolyQuery must
+	/// not re-enter the same DtNavMeshQuery from Process(), because that would
+	/// clobber the batch in flight.
+	m_polyBatchRefs  [DT_POLY_QUERY_BATCH_SIZE]DtPolyRef
+	m_polyBatchPolys [DT_POLY_QUERY_BATCH_SIZE]*DtPoly
+
+	/// Reusable implementations of the two built-in polygon queries, for the
+	/// same reason: taking the address of a stack local would escape it.
+	m_findNearestPolyQuery dtFindNearestPolyQuery
+	m_collectPolysQuery    dtCollectPolysQuery
+	///@}
 }
 
 // / Gets the node pool.
