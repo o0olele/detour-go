@@ -502,10 +502,12 @@ func (this *DtNavMeshQuery) ClosestPointOnPoly(ref DtPolyRef, pos, closest []flo
 	var edget [DT_VERTS_PER_POLYGON]float32
 	nv := int(poly.VertCount)
 	for i := 0; i < nv; i++ {
-		DtVcopy(verts[i*3:], tile.Verts[int(poly.Verts[i])*3:])
+		j := int(poly.Verts[i]) * 3
+		DtVcopy(verts[i*3:i*3+3:i*3+3], tile.Verts[j:j+3:j+3])
 	}
 	DtVcopy(closest, pos)
-	if !DtDistancePtPolyEdgesSqr(pos, verts[:], nv, edged[:], edget[:]) {
+	// Fixed-size internal variants: see the comment in DetourCommon.go.
+	if !dtDistancePtPolyEdgesSqr(pos[0], pos[2], &verts, nv, &edged, &edget) {
 		// Point is outside the polygon, dtClamp to nearest edge.
 		dmin := edged[0]
 		imin := 0
@@ -515,8 +517,8 @@ func (this *DtNavMeshQuery) ClosestPointOnPoly(ref DtPolyRef, pos, closest []flo
 				imin = i
 			}
 		}
-		va := verts[imin*3:]
-		vb := verts[((imin+1)%nv)*3:]
+		va := verts[imin*3 : imin*3+3 : imin*3+3]
+		vb := verts[((imin+1)%nv)*3 : ((imin+1)%nv)*3+3 : ((imin+1)%nv)*3+3]
 		DtVlerp(closest, va, vb, edget[imin])
 
 		if posOverPoly != nil {
@@ -529,18 +531,22 @@ func (this *DtNavMeshQuery) ClosestPointOnPoly(ref DtPolyRef, pos, closest []flo
 	}
 
 	// Find height at the location.
+	var closestV [3]float32
+	DtVcopy(closestV[:], closest)
 	for j := 0; j < int(pd.TriCount); j++ {
-		t := tile.DetailTris[(int(pd.TriBase)+j)*4:]
-		var v [3][]float32
+		base := (int(pd.TriBase) + j) * 4
+		t := tile.DetailTris[base : base+4 : base+4]
+		var v [3][3]float32
 		for k := 0; k < 3; k++ {
 			if t[k] < poly.VertCount {
-				v[k] = tile.Verts[int(poly.Verts[t[k]])*3:]
+				s := int(poly.Verts[t[k]]) * 3
+				DtVcopy(v[k][:], tile.Verts[s:s+3:s+3])
 			} else {
-				v[k] = tile.DetailVerts[(pd.VertBase+uint32(t[k]-poly.VertCount))*3:]
+				s := int(pd.VertBase+uint32(t[k]-poly.VertCount)) * 3
+				DtVcopy(v[k][:], tile.DetailVerts[s:s+3:s+3])
 			}
 		}
-		var h float32
-		if DtClosestHeightPointTriangle(closest, v[0], v[1], v[2], &h) {
+		if h, ok := dtClosestHeightPointTriangle(closestV, v[0], v[1], v[2]); ok {
 			closest[1] = h
 			break
 		}
@@ -580,11 +586,11 @@ func (this *DtNavMeshQuery) ClosestPointOnPolyBoundary(ref DtPolyRef, pos, close
 	var edget [DT_VERTS_PER_POLYGON]float32
 	nv := 0
 	for i := 0; i < int(poly.VertCount); i++ {
-		DtVcopy(verts[nv*3:], tile.Verts[int(poly.Verts[i])*3:])
+		DtVcopy(verts[nv*3:nv*3+3:nv*3+3], tile.Verts[int(poly.Verts[i])*3:])
 		nv++
 	}
 
-	inside := DtDistancePtPolyEdgesSqr(pos, verts[:], nv, edged[:], edget[:])
+	inside := dtDistancePtPolyEdgesSqr(pos[0], pos[2], &verts, nv, &edged, &edget)
 	if inside {
 		// Point is inside the polygon, return the point.
 		DtVcopy(closest, pos)
@@ -598,8 +604,8 @@ func (this *DtNavMeshQuery) ClosestPointOnPolyBoundary(ref DtPolyRef, pos, close
 				imin = i
 			}
 		}
-		va := verts[imin*3:]
-		vb := verts[((imin+1)%nv)*3:]
+		va := verts[imin*3 : imin*3+3 : imin*3+3]
+		vb := verts[((imin+1)%nv)*3 : ((imin+1)%nv)*3+3 : ((imin+1)%nv)*3+3]
 		DtVlerp(closest, va, vb, edget[imin])
 	}
 
@@ -640,17 +646,21 @@ func (this *DtNavMeshQuery) GetPolyHeight(ref DtPolyRef, pos []float32, height *
 		ip := (uint32)(current-polyBase) / sizeofPoly
 		pd := &tile.DetailMeshes[ip]
 		for j := 0; j < int(pd.TriCount); j++ {
-			t := tile.DetailTris[(int(pd.TriBase)+j)*4:]
-			var v [3][]float32
+			base := (int(pd.TriBase) + j) * 4
+			t := tile.DetailTris[base : base+4 : base+4]
+			var v [3][3]float32
 			for k := 0; k < 3; k++ {
 				if t[k] < poly.VertCount {
-					v[k] = tile.Verts[int(poly.Verts[t[k]])*3:]
+					s := int(poly.Verts[t[k]]) * 3
+					DtVcopy(v[k][:], tile.Verts[s:s+3:s+3])
 				} else {
-					v[k] = tile.DetailVerts[(pd.VertBase+uint32(t[k]-poly.VertCount))*3:]
+					s := int(pd.VertBase+uint32(t[k]-poly.VertCount)) * 3
+					DtVcopy(v[k][:], tile.DetailVerts[s:s+3:s+3])
 				}
 			}
-			var h float32
-			if DtClosestHeightPointTriangle(pos, v[0], v[1], v[2], &h) {
+			var posV [3]float32
+			DtVcopy(posV[:], pos)
+			if h, ok := dtClosestHeightPointTriangle(posV, v[0], v[1], v[2]); ok {
 				if height != nil {
 					*height = h
 				}
@@ -3254,9 +3264,9 @@ func (this *DtNavMeshQuery) FindLocalNeighbourhood(startRef DtPolyRef, centerPos
 				// Get vertices and test overlap
 				npb := int(pastPoly.VertCount)
 				for k := 0; k < npb; k++ {
-					DtVcopy(pb[k*3:], pastTile.Verts[int(pastPoly.Verts[k])*3:])
+					DtVcopy(pb[k*3:k*3+3:k*3+3], pastTile.Verts[int(pastPoly.Verts[k])*3:])
 				}
-				if DtOverlapPolyPoly2D(pa[:], npa, pb[:], npb) {
+				if dtOverlapPolyPoly2D(&pa, npa, &pb, npb) {
 					overlap = true
 					break
 				}
